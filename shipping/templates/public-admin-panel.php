@@ -212,7 +212,7 @@ $greeting = ($hour >= 5 && $hour < 12) ? 'صباح الخير' : 'مساء ال�
     <div class="shipping-admin-layout" style="display: flex; min-height: 800px;">
         <!-- SIDEBAR -->
         <?php $is_restricted = $is_subscriber; ?>
-        <div class="shipping-sidebar" style="flex-shrink: 0; background: <?php echo $appearance['sidebar_bg_color']; ?>; border-left: 1px solid var(--shipping-border-color); padding: 20px 0; position: relative; transition: all 0.3s ease; display: flex; flex-direction: column;">
+        <div class="shipping-sidebar" style="background: <?php echo $appearance['sidebar_bg_color']; ?>;">
             <ul style="list-style: none; padding: 0; margin: 0; flex: 1;">
 
                 <?php if (!$is_restricted): ?>
@@ -311,10 +311,10 @@ $greeting = ($hour >= 5 && $hour < 12) ? 'صباح الخير' : 'مساء ال�
                 <?php endif; ?>
             </ul>
 
-            <div class="shipping-sidebar-footer" style="padding: 10px 0; border-top: 1px solid rgba(0,0,0,0.05); margin-top: auto;">
-                <button class="shipping-sidebar-toggle" onclick="AdminController.toggleSidebar()" title="Toggle Sidebar">
+            <div class="shipping-sidebar-footer">
+                <button class="shipping-sidebar-toggle" id="shipping-sidebar-toggle" title="Toggle Sidebar">
                     <span class="dashicons dashicons-arrow-right-alt2"></span>
-                    <span class="toggle-text" style="font-size: 13px; font-weight: 600; margin-right: 10px;">تصغير القائمة</span>
+                    <span class="toggle-text">تصغير القائمة</span>
                 </button>
             </div>
         </div>

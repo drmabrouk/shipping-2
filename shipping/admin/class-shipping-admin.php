@@ -55,6 +55,19 @@ class Shipping_Admin {
         wp_enqueue_script('leaflet-js', 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js', array(), '1.9.4', true);
         wp_enqueue_style($this->plugin_name, SHIPPING_PLUGIN_URL . 'assets/css/shipping-admin.css', array(), $this->version, 'all');
 
+        // Modular JS Controllers
+        wp_enqueue_script('shipping-core', SHIPPING_PLUGIN_URL . 'assets/js/shipping-core.js', array('jquery'), $this->version, true);
+        wp_enqueue_script('shipping-admin', SHIPPING_PLUGIN_URL . 'assets/js/admin-controller.js', array('shipping-core'), $this->version, true);
+
+        $info = Shipping_Settings::get_shipping_info();
+        wp_localize_script('shipping-core', 'shippingVars', array(
+            'ajaxurl' => admin_url('admin-ajax.php'),
+            'adminUrl' => admin_url('admin.php?page=shipping-admin'),
+            'currency' => $info['currency'] ?? 'SAR',
+            'nonce' => wp_create_nonce('shipping_admin_action'),
+            'profileNonce' => wp_create_nonce('shipping_profile_action'),
+        ));
+
         $appearance = Shipping_Settings::get_appearance();
         $custom_css = "
             :root {
