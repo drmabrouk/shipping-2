@@ -12,6 +12,9 @@ $sub = $_GET['sub'] ?? 'invoice-gen';
         <button class="shipping-tab-btn <?php echo $sub == 'pricing-rules' ? 'shipping-active' : ''; ?>" onclick="shippingOpenInternalTab('pricing-rules', this)">قواعد التسعير</button>
         <button class="shipping-tab-btn <?php echo $sub == 'extra-charges' ? 'shipping-active' : ''; ?>" onclick="shippingOpenInternalTab('pricing-extra', this)">رسوم إضافية</button>
     </div>
+    <div style="display:flex; gap:10px;">
+        <a href="<?php echo admin_url('admin-ajax.php?action=shipping_export_csv&type=invoices&nonce=' . wp_create_nonce('shipping_export_nonce')); ?>" class="shipping-btn" style="width:auto; background: #2f855a; text-decoration:none;">تصدير Invoices</a>
+    </div>
 </div>
 
 <!-- Professional Search Engine for Billing -->

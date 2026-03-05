@@ -32,6 +32,22 @@ $sub = $_GET['sub'] ?? 'documentation';
     </form>
 </div>
 
+<!-- Extra Logic to hide/show customs search block -->
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const tabs = document.querySelectorAll('.shipping-tab-btn');
+    tabs.forEach(t => {
+        t.addEventListener('click', function() {
+            const block = document.getElementById('customs-search-block');
+            if (block) {
+                const isTaxes = this.getAttribute('onclick').includes('customs-taxes');
+                block.style.display = isTaxes ? 'none' : 'block';
+            }
+        });
+    });
+});
+</script>
+
 <div id="customs-invoices" class="shipping-internal-tab" style="display: <?php echo $sub == 'invoices' ? 'block' : 'none'; ?>;">
     <div class="shipping-card">
         <h4>الفواتير التجارية المصاحبة للشحنات</h4>

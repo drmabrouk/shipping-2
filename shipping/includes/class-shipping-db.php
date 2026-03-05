@@ -653,6 +653,17 @@ class Shipping_DB {
         if ($res) {
             $id = $wpdb->insert_id;
             self::log_shipment_event($id, $data['status'] ?? 'pending', 'Shipment created');
+
+            Shipping_Logger::log('إضافة شحنة جديدة', "رقم الشحنة: {$data['shipment_number']}");
+
+            // Notification Alert for Admins
+            self::save_alert([
+                'title' => 'شحنة جديدة في النظام',
+                'message' => "تم إنشاء شحنة جديدة رقم {$data['shipment_number']} بنجاح.",
+                'severity' => 'info',
+                'status' => 'active'
+            ]);
+
             return $id;
         }
         return false;
@@ -811,8 +822,9 @@ class Shipping_DB {
     public static function create_invoice($data) {
         global $wpdb;
         $table = $wpdb->prefix . 'shipping_invoices';
+        $invoice_number = 'INV-' . strtoupper(wp_generate_password(8, false));
         $res = $wpdb->insert($table, array(
-            'invoice_number' => 'INV-' . strtoupper(wp_generate_password(8, false)),
+            'invoice_number' => $invoice_number,
             'customer_id' => intval($data['customer_id']),
             'order_id' => intval($data['order_id'] ?? 0),
             'subtotal' => floatval($data['subtotal']),
@@ -828,6 +840,7 @@ class Shipping_DB {
         if ($res) {
             $id = $wpdb->insert_id;
             self::log_billing_event($id, 'Invoice Created', floatval($data['total_amount']));
+            Shipping_Logger::log('إصدار فاتورة', "رقم الفاتورة: $invoice_number (المبلغ: {$data['total_amount']})");
             return $id;
         }
         return false;
@@ -848,6 +861,18 @@ class Shipping_DB {
             $invoice_id = intval($data['invoice_id']);
             $wpdb->update($wpdb->prefix . 'shipping_invoices', array('status' => 'paid'), array('id' => $invoice_id));
             self::log_billing_event($invoice_id, 'Payment Received', floatval($data['amount_paid']));
+
+            $inv_num = $wpdb->get_var($wpdb->prepare("SELECT invoice_number FROM {$wpdb->prefix}shipping_invoices WHERE id = %d", $invoice_id));
+            Shipping_Logger::log('تسجيل دفعة مادية', "الفاتورة: $inv_num (المبلغ: {$data['amount_paid']})");
+
+            // Notification Alert for Admins
+            self::save_alert([
+                'title' => 'تأكيد سداد فاتورة',
+                'message' => "تم استلام مبلغ {$data['amount_paid']} للفاتورة $inv_num بنجاح.",
+                'severity' => 'info',
+                'status' => 'active'
+            ]);
+
             return true;
         }
         return false;
@@ -1096,7 +1121,7 @@ class Shipping_DB {
 
     public static function add_route($data) {
         global $wpdb;
-        return $wpdb->insert($wpdb->prefix . 'shipping_logistics', array(
+        $res = $wpdb->insert($wpdb->prefix . 'shipping_logistics', array(
             'route_name' => sanitize_text_field($data['route_name']),
             'description' => sanitize_textarea_field($data['description'] ?? ''),
             'start_location' => sanitize_text_field($data['start_location'] ?? ''),
@@ -1104,6 +1129,10 @@ class Shipping_DB {
             'total_distance' => floatval($data['total_distance'] ?? 0),
             'estimated_duration' => sanitize_text_field($data['estimated_duration'] ?? '')
         ));
+        if ($res) {
+            Shipping_Logger::log('إضافة مسار جديد', "المسار: {$data['route_name']}");
+        }
+        return $res;
     }
 
     public static function get_routes() {
@@ -1113,13 +1142,22 @@ class Shipping_DB {
 
     public static function update_route($id, $data) {
         global $wpdb;
-        return $wpdb->update($wpdb->prefix . 'shipping_logistics', $data, array('id' => $id));
+        $res = $wpdb->update($wpdb->prefix . 'shipping_logistics', $data, array('id' => $id));
+        if ($res !== false) {
+            Shipping_Logger::log('تحديث مسار', "معرف المسار: $id");
+        }
+        return $res;
     }
 
     public static function delete_route($id) {
         global $wpdb;
+        $name = $wpdb->get_var($wpdb->prepare("SELECT route_name FROM {$wpdb->prefix}shipping_logistics WHERE id = %d", $id));
         $wpdb->delete($wpdb->prefix . 'shipping_route_stops', array('route_id' => $id));
-        return $wpdb->delete($wpdb->prefix . 'shipping_logistics', array('id' => $id));
+        $res = $wpdb->delete($wpdb->prefix . 'shipping_logistics', array('id' => $id));
+        if ($res) {
+            Shipping_Logger::log('حذف مسار', "المسار: $name (ID: $id)");
+        }
+        return $res;
     }
 
     public static function get_route_stops($route_id) {
@@ -1157,7 +1195,7 @@ class Shipping_DB {
 
     public static function add_warehouse($data) {
         global $wpdb;
-        return $wpdb->insert($wpdb->prefix . 'shipping_warehouses', array(
+        $res = $wpdb->insert($wpdb->prefix . 'shipping_warehouses', array(
             'name' => sanitize_text_field($data['name']),
             'location' => sanitize_text_field($data['location']),
             'total_capacity' => floatval($data['total_capacity']),
@@ -1165,17 +1203,30 @@ class Shipping_DB {
             'manager_name' => sanitize_text_field($data['manager_name']),
             'contact_number' => sanitize_text_field($data['contact_number'])
         ));
+        if ($res) {
+            Shipping_Logger::log('إضافة مستودع جديد', "المستودع: {$data['name']}");
+        }
+        return $res;
     }
 
     public static function update_warehouse($id, $data) {
         global $wpdb;
-        return $wpdb->update($wpdb->prefix . 'shipping_warehouses', $data, array('id' => $id));
+        $res = $wpdb->update($wpdb->prefix . 'shipping_warehouses', $data, array('id' => $id));
+        if ($res !== false) {
+            Shipping_Logger::log('تحديث مستودع', "ID: $id");
+        }
+        return $res;
     }
 
     public static function delete_warehouse($id) {
         global $wpdb;
+        $name = $wpdb->get_var($wpdb->prepare("SELECT name FROM {$wpdb->prefix}shipping_warehouses WHERE id = %d", $id));
         $wpdb->delete($wpdb->prefix . 'shipping_inventory', array('warehouse_id' => $id));
-        return $wpdb->delete($wpdb->prefix . 'shipping_warehouses', array('id' => $id));
+        $res = $wpdb->delete($wpdb->prefix . 'shipping_warehouses', array('id' => $id));
+        if ($res) {
+            Shipping_Logger::log('حذف مستودع', "المستودع: $name (ID: $id)");
+        }
+        return $res;
     }
 
     // Inventory Management
@@ -1233,7 +1284,7 @@ class Shipping_DB {
 
     public static function add_vehicle($data) {
         global $wpdb;
-        return $wpdb->insert($wpdb->prefix . 'shipping_fleet', array(
+        $res = $wpdb->insert($wpdb->prefix . 'shipping_fleet', array(
             'vehicle_number' => sanitize_text_field($data['vehicle_number']),
             'vehicle_type' => sanitize_text_field($data['vehicle_type']),
             'capacity' => floatval($data['capacity']),
@@ -1242,17 +1293,30 @@ class Shipping_DB {
             'driver_phone' => sanitize_text_field($data['driver_phone']),
             'next_maintenance_date' => $data['next_maintenance_date'] ?: null
         ));
+        if ($res) {
+            Shipping_Logger::log('إضافة مركبة للأسطول', "المركبة: {$data['vehicle_number']}");
+        }
+        return $res;
     }
 
     public static function update_vehicle($id, $data) {
         global $wpdb;
-        return $wpdb->update($wpdb->prefix . 'shipping_fleet', $data, array('id' => $id));
+        $res = $wpdb->update($wpdb->prefix . 'shipping_fleet', $data, array('id' => $id));
+        if ($res !== false) {
+            Shipping_Logger::log('تحديث مركبة', "معرف المركبة: $id");
+        }
+        return $res;
     }
 
     public static function delete_vehicle($id) {
         global $wpdb;
+        $num = $wpdb->get_var($wpdb->prepare("SELECT vehicle_number FROM {$wpdb->prefix}shipping_fleet WHERE id = %d", $id));
         $wpdb->delete($wpdb->prefix . 'shipping_maintenance', array('vehicle_id' => $id));
-        return $wpdb->delete($wpdb->prefix . 'shipping_fleet', array('id' => $id));
+        $res = $wpdb->delete($wpdb->prefix . 'shipping_fleet', array('id' => $id));
+        if ($res) {
+            Shipping_Logger::log('حذف مركبة من الأسطول', "المركبة: $num (ID: $id)");
+        }
+        return $res;
     }
 
     // Maintenance Management

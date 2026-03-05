@@ -117,6 +117,7 @@ window.shippingOpenInternalTab = function(tabId, btn) {
     const billingSearch = document.getElementById('billing-search-block');
     if (billingSearch) {
         billingSearch.style.display = (tabId === 'billing-records' || tabId === 'billing-balances') ? 'block' : 'none';
+        if (billingSearch.style.display === 'block') BillingController.init(); // Re-init chart or data if needed
     }
 
     const logisticsSearch = document.getElementById('logistics-search-block');

@@ -55,6 +55,7 @@ class Shipping {
         $this->loader->add_action('wp_ajax_shipping_close_ticket', $plugin_public, 'ajax_close_ticket');
         $this->loader->add_action('wp_ajax_shipping_create_shipment', $plugin_public, 'ajax_create_shipment');
         $this->loader->add_action('wp_ajax_shipping_update_shipment', $plugin_public, 'ajax_update_shipment');
+        $this->loader->add_action('wp_ajax_shipping_delete_shipment', $plugin_public, 'ajax_delete_shipment');
         $this->loader->add_action('wp_ajax_shipping_get_shipment_tracking', $plugin_public, 'ajax_get_shipment_tracking');
         $this->loader->add_action('wp_ajax_shipping_bulk_shipments', $plugin_public, 'ajax_bulk_shipments');
         $this->loader->add_action('wp_ajax_shipping_save_invoice', $plugin_public, 'ajax_save_invoice');
@@ -127,6 +128,9 @@ class Shipping {
         $this->loader->add_action('wp_ajax_shipping_rollback_log_ajax', $plugin_public, 'ajax_rollback_log');
         $this->loader->add_action('wp_ajax_shipping_delete_log', $plugin_public, 'ajax_delete_log');
         $this->loader->add_action('wp_ajax_shipping_clear_all_logs', $plugin_public, 'ajax_clear_all_logs');
+        $this->loader->add_action('wp_ajax_shipping_get_alerts', $plugin_public, 'ajax_get_alerts');
+        $this->loader->add_action('wp_ajax_shipping_acknowledge_alert', $plugin_public, 'ajax_acknowledge_alert');
+        $this->loader->add_action('wp_ajax_shipping_export_csv', $plugin_public, 'ajax_export_csv');
         $this->loader->add_action('wp_ajax_shipping_get_user_role', $plugin_public, 'ajax_get_user_role');
         $this->loader->add_action('wp_ajax_shipping_update_customer_account_ajax', $plugin_public, 'ajax_update_customer_account');
         $this->loader->add_action('wp_ajax_shipping_verify_document', $plugin_public, 'ajax_verify_document');

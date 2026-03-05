@@ -7,6 +7,8 @@ window.AdminController = {
     init() {
         this.setupEventListeners();
         this.initSidebarState();
+        this.pollAlerts();
+        setInterval(() => this.pollAlerts(), 30000);
     },
 
     initSidebarState() {
@@ -189,9 +191,51 @@ window.AdminController = {
             menu.style.display = 'block';
             const userMenu = document.getElementById('shipping-user-dropdown-menu');
             if (userMenu) userMenu.style.display = 'none';
+            this.pollAlerts(); // Refresh when opening
         } else {
             menu.style.display = 'none';
         }
+    },
+
+    pollAlerts() {
+        fetch(ajaxurl + '?action=shipping_get_alerts&nonce=' + (shippingVars.nonce || ''))
+        .then(r => r.json()).then(res => {
+            if (res.success) {
+                this.renderAlerts(res.data);
+            }
+        });
+    },
+
+    renderAlerts(alerts) {
+        const container = document.getElementById('shipping-notifications-menu');
+        const badge = document.querySelector('.shipping-icon-dot');
+        if (!container) return;
+
+        if (alerts.length > 0) {
+            if (badge) badge.style.display = 'block';
+            let html = '<h4 style="margin: 0 0 10px 0; font-size: 14px; border-bottom: 1px solid #eee; padding-bottom: 8px;">التنبيهات والإشعارات</h4>';
+            html += alerts.map(a => `
+                <div style="font-size: 12px; padding: 10px; border-bottom: 1px solid #f9fafb; color: #4a5568; display: flex; gap: 10px; align-items: flex-start; background: ${a.severity === 'critical' ? '#fff5f5' : 'transparent'};">
+                    <span class="dashicons dashicons-${a.severity === 'critical' ? 'warning' : 'megaphone'}" style="font-size: 16px; color: ${a.severity === 'critical' ? '#e53e3e' : 'var(--shipping-primary-color)'};"></span>
+                    <div style="flex:1;">
+                        <div style="font-weight:700;">${a.title}</div>
+                        <div style="margin-top:2px;">${a.message}</div>
+                        <button onclick="AdminController.acknowledgeAlert(${a.id})" style="border:none; background:none; padding:0; color:var(--shipping-primary-color); font-size:10px; cursor:pointer; font-weight:700; margin-top:5px;">تحديد كمقروء</button>
+                    </div>
+                </div>
+            `).join('');
+            container.innerHTML = html;
+        } else {
+            if (badge) badge.style.display = 'none';
+            container.innerHTML = '<h4 style="margin: 0 0 10px 0; font-size: 14px; border-bottom: 1px solid #eee; padding-bottom: 8px;">التنبيهات والإشعارات</h4><div style="font-size: 12px; color: #94a3b8; text-align: center; padding: 10px;">لا توجد تنبيهات جديدة حالياً</div>';
+        }
+    },
+
+    acknowledgeAlert(id) {
+        const fd = new FormData();
+        fd.append('action', 'shipping_acknowledge_alert');
+        fd.append('id', id);
+        fetch(ajaxurl, { method: 'POST', body: fd }).then(() => this.pollAlerts());
     },
 
     saveProfile() {
