@@ -64,16 +64,18 @@
 
 .shipping-table th {
     background: var(--shipping-bg-light);
-    padding: 15px 20px;
+    padding: 12px 15px;
     font-weight: 700;
     color: var(--shipping-dark-color);
     border-bottom: 2px solid var(--shipping-border-color);
+    font-size: 13px;
 }
 
 .shipping-table td {
-    padding: 15px 20px;
+    padding: 10px 15px;
     border-bottom: 1px solid var(--shipping-border-color);
     vertical-align: middle;
+    font-size: 13px;
 }
 
 .shipping-table tr:last-child td {

@@ -144,6 +144,7 @@ $greeting = ($hour >= 5 && $hour < 12) ? 'صباح الخير' : 'مساء ال�
 
                 <!-- Add Shipment Button -->
                 <?php if ($is_admin || $is_sys_admin || $is_administrator): ?>
+                    <a href="<?php echo add_query_arg(['shipping_tab' => 'tracking-logistics', 'sub' => 'live-tracking']); ?>" class="shipping-btn shipping-btn-outline" style="height: 36px; padding: 0 15px; font-size: 12px; border-radius: 8px; white-space: nowrap; text-decoration:none;"><span class="dashicons dashicons-location-alt" style="font-size:16px; margin-top:2px;"></span> تتبع الشحنات</a>
                     <button onclick="shippingOpenAddShipmentModal()" class="shipping-btn" style="height: 36px; padding: 0 15px; font-size: 12px; background: var(--shipping-primary-color); box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius: 8px; white-space: nowrap;">+ إضافة شحنة</button>
                 <?php endif; ?>
             </div>

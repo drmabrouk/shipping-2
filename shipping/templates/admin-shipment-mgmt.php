@@ -90,8 +90,7 @@ $sub = $_GET['sub'] ?? 'create-shipment';
                             <td>
                                 <div style="display:flex; gap:6px; justify-content: flex-end;">
                                     <button class="shipping-btn-outline" style="padding:6px 10px; font-size:11px;" onclick="ShipmentsController.quickTrack('<?php echo $s->shipment_number; ?>', <?php echo $s->id; ?>, this)">تتبع</button>
-                                    <button class="shipping-btn-outline" style="padding:6px 10px; font-size:11px; color: #319795; border-color: #319795;" onclick="ShipmentsController.viewFullDossier(<?php echo $s->id; ?>)">التفاصيل</button>
-                                    <button class="shipping-btn-outline" style="padding:6px 10px; font-size:11px; color: #2d3748; border-color: #2d3748;" onclick="ShipmentsController.printSticker(<?php echo $s->id; ?>)">Sticker</button>
+                                    <button class="shipping-btn-outline" style="padding:6px 10px; font-size:11px; color: #2d3748; border-color: #2d3748;" onclick="ShipmentsController.printSticker(<?php echo $s->id; ?>)">ملصق الشحنة</button>
                                     <button class="shipping-btn-outline" style="padding:6px 10px; font-size:11px; color: #805ad5; border-color: #805ad5;" onclick="ShipmentsController.printInvoice(<?php echo $s->id; ?>)">الفاتورة</button>
                                     <button class="shipping-btn" style="padding:6px 10px; font-size:11px; background: #4a5568;" onclick="ShipmentsController.openEditModal(<?php echo htmlspecialchars(json_encode($s)); ?>)">تعديل</button>
                                 </div>
