@@ -24,6 +24,9 @@ window.AdminController = {
         sidebar.classList.toggle('collapsed');
         const isCollapsed = sidebar.classList.contains('collapsed');
         localStorage.setItem('shipping_sidebar_collapsed', isCollapsed);
+
+        // Trigger a resize event to help any layout components (like charts) adjust
+        window.dispatchEvent(new Event('resize'));
     },
 
     openSubTab(tab, btn) {
@@ -39,6 +42,11 @@ window.AdminController = {
     },
 
     setupEventListeners() {
+        const toggleBtn = document.getElementById('shipping-sidebar-toggle');
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', () => this.toggleSidebar());
+        }
+
         this.bindForm('shipping-edit-page-form', 'shipping_save_page_settings', () => location.reload(), shippingVars.nonce);
         this.bindForm('shipping-add-article-form', 'shipping_add_article', () => location.reload(), shippingVars.nonce);
         this.bindForm('shipping-notif-template-form', 'shipping_save_template_ajax', () => shippingShowNotification('تم حفظ القالب بنجاح'), shippingVars.nonce);
