@@ -2,14 +2,36 @@
 global $wpdb;
 $sub = $_GET['sub'] ?? 'invoice-gen';
 ?>
-<div class="shipping-tabs-wrapper" style="display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #eee; overflow-x: auto; white-space: nowrap; padding-bottom: 10px;">
-    <button class="shipping-tab-btn <?php echo $sub == 'invoice-gen' ? 'shipping-active' : ''; ?>" onclick="shippingOpenInternalTab('billing-invoice', this)">إصدار فواتير</button>
-    <button class="shipping-tab-btn <?php echo $sub == 'records' ? 'shipping-active' : ''; ?>" onclick="shippingOpenInternalTab('billing-records', this)">سجلات الدفع</button>
-    <button class="shipping-tab-btn <?php echo $sub == 'balances' ? 'shipping-active' : ''; ?>" onclick="shippingOpenInternalTab('billing-balances', this)">الأرصدة</button>
-    <button class="shipping-tab-btn <?php echo $sub == 'reports' ? 'shipping-active' : ''; ?>" onclick="shippingOpenInternalTab('billing-reports', this)">التقارير المالية</button>
-    <button class="shipping-tab-btn <?php echo $sub == 'calculator' ? 'shipping-active' : ''; ?>" onclick="shippingOpenInternalTab('pricing-calc', this)">حاسبة التكلفة</button>
-    <button class="shipping-tab-btn <?php echo $sub == 'pricing-rules' ? 'shipping-active' : ''; ?>" onclick="shippingOpenInternalTab('pricing-rules', this)">قواعد التسعير</button>
-    <button class="shipping-tab-btn <?php echo $sub == 'extra-charges' ? 'shipping-active' : ''; ?>" onclick="shippingOpenInternalTab('pricing-extra', this)">رسوم إضافية</button>
+<div class="shipping-admin-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+    <div class="shipping-tabs-wrapper" style="display: flex; gap: 10px; margin-bottom: 0; border-bottom: none; overflow-x: auto; white-space: nowrap; padding-bottom: 10px; margin-top: 0;">
+        <button class="shipping-tab-btn <?php echo $sub == 'invoice-gen' ? 'shipping-active' : ''; ?>" onclick="shippingOpenInternalTab('billing-invoice', this)">إصدار فواتير</button>
+        <button class="shipping-tab-btn <?php echo $sub == 'records' ? 'shipping-active' : ''; ?>" onclick="shippingOpenInternalTab('billing-records', this)">سجلات الدفع</button>
+        <button class="shipping-tab-btn <?php echo $sub == 'balances' ? 'shipping-active' : ''; ?>" onclick="shippingOpenInternalTab('billing-balances', this)">الأرصدة</button>
+        <button class="shipping-tab-btn <?php echo $sub == 'reports' ? 'shipping-active' : ''; ?>" onclick="shippingOpenInternalTab('billing-reports', this)">التقارير المالية</button>
+        <button class="shipping-tab-btn <?php echo $sub == 'calculator' ? 'shipping-active' : ''; ?>" onclick="shippingOpenInternalTab('pricing-calc', this)">حاسبة التكلفة</button>
+        <button class="shipping-tab-btn <?php echo $sub == 'pricing-rules' ? 'shipping-active' : ''; ?>" onclick="shippingOpenInternalTab('pricing-rules', this)">قواعد التسعير</button>
+        <button class="shipping-tab-btn <?php echo $sub == 'extra-charges' ? 'shipping-active' : ''; ?>" onclick="shippingOpenInternalTab('pricing-extra', this)">رسوم إضافية</button>
+    </div>
+</div>
+
+<!-- Professional Search Engine for Billing -->
+<div class="shipping-search-engine-block" id="billing-search-block" style="display: <?php echo in_array($sub, ['records', 'balances']) ? 'block' : 'none'; ?>;">
+    <form id="billing-advanced-search" style="display: grid; grid-template-columns: 2fr 1fr auto; gap: 15px; align-items: end;">
+        <div class="shipping-form-group" style="margin-bottom:0;">
+            <label style="font-size: 12px; font-weight: 700; color: #64748b;">بحث شامل (رقم الفاتورة، العميل):</label>
+            <input type="text" id="billing-search-query" class="shipping-input" placeholder="أدخل بيانات البحث..." oninput="BillingController.filterBilling()">
+        </div>
+        <div class="shipping-form-group" style="margin-bottom:0;">
+            <label style="font-size: 12px; font-weight: 700; color: #64748b;">ترتيب حسب:</label>
+            <select id="billing-sort-order" class="shipping-select" onchange="BillingController.filterBilling()">
+                <option value="newest">الأحدث أولاً</option>
+                <option value="oldest">الأقدم أولاً</option>
+                <option value="amount_desc">المبلغ (الأعلى)</option>
+                <option value="amount_asc">المبلغ (الأقل)</option>
+            </select>
+        </div>
+        <button type="button" onclick="BillingController.resetFilters()" class="shipping-btn shipping-btn-outline" style="height: 45px; width: auto;">إعادة ضبط</button>
+    </form>
 </div>
 
 <!-- 2. Payment Records -->
@@ -26,7 +48,7 @@ $sub = $_GET['sub'] ?? 'invoice-gen';
                     <?php if(empty($payments)): ?>
                         <tr><td colspan="6" style="text-align:center; padding:20px;">لا توجد سجلات دفع حالياً.</td></tr>
                     <?php else: foreach($payments as $p): ?>
-                        <tr>
+                        <tr class="billing-record-row" data-number="<?php echo $p->invoice_number; ?>" data-customer="<?php echo esc_attr($p->customer_name); ?>" data-amount="<?php echo $p->amount_paid; ?>" data-date="<?php echo $p->payment_date; ?>">
                             <td>#<?php echo $p->transaction_id; ?></td>
                             <td><strong><?php echo $p->invoice_number; ?></strong></td>
                             <td><?php echo esc_html($p->customer_name); ?></td>
@@ -65,8 +87,8 @@ $sub = $_GET['sub'] ?? 'invoice-gen';
                         <select name="customer_id" id="invoice-customer-id" class="shipping-select" required>
                             <option value="">اختر العميل...</option>
                             <?php
-                            $customers = $wpdb->get_results("SELECT id, CONCAT(first_name, ' ', last_name) as name FROM {$wpdb->prefix}shipping_customers");
-                            foreach($customers as $c) echo "<option value='{$c->id}'>".esc_html($c->name)."</option>";
+                            $all_customers = $wpdb->get_results("SELECT id, CONCAT(first_name, ' ', last_name) as name FROM {$wpdb->prefix}shipping_customers ORDER BY first_name ASC");
+                            foreach($all_customers as $c) echo "<option value='{$c->id}'>".esc_html($c->name)."</option>";
                             ?>
                         </select>
                     </div>
@@ -151,11 +173,11 @@ $sub = $_GET['sub'] ?? 'invoice-gen';
         <div class="shipping-table-container">
             <table class="shipping-table">
                 <thead><tr><th>رقم الفاتورة</th><th>العميل</th><th>المبلغ</th><th>تاريخ الاستحقاق</th><th>الحالة</th><th>إجراءات</th></tr></thead>
-                <tbody>
+                <tbody id="billing-balances-list">
                     <?php if(empty($receivables)): ?>
                         <tr><td colspan="6" style="text-align:center; padding:20px;">لا توجد مديونيات حالياً.</td></tr>
                     <?php else: foreach($receivables as $inv): ?>
-                        <tr>
+                        <tr class="billing-balance-row" data-number="<?php echo $inv->invoice_number; ?>" data-customer="<?php echo esc_attr($inv->customer_name); ?>" data-amount="<?php echo $inv->total_amount; ?>" data-date="<?php echo $inv->due_date; ?>">
                             <td><strong><?php echo $inv->invoice_number; ?></strong></td>
                             <td><?php echo esc_html($inv->customer_name); ?></td>
                             <td><?php echo number_format($inv->total_amount, 2); ?> <?php echo esc_html($currency); ?></td>

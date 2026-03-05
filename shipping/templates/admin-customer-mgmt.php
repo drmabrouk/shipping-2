@@ -1,15 +1,38 @@
 <?php if (!defined('ABSPATH')) exit; ?>
-<div class="shipping-admin-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; background: #fff; padding: 20px; border-radius: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-    <div style="display: flex; align-items: center; gap: 20px; flex: 1;">
-        <h2 style="margin: 0; font-weight: 800; color: var(--shipping-dark-color);">إدارة العملاء الموحدة</h2>
-        <div style="position: relative; flex: 1; max-width: 400px;">
-            <input type="text" id="customer-search-engine" class="shipping-input" placeholder="ابحث عن عميل بالاسم، البريد، أو رقم الهاتف..." oninput="CustomersController.filterCustomers()">
-            <span class="dashicons dashicons-search" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: #94a3b8;"></span>
-        </div>
-    </div>
+<div class="shipping-admin-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+    <h2 style="margin: 0; font-weight: 800; color: var(--shipping-dark-color);">إدارة العملاء الموحدة</h2>
     <div style="display: flex; gap: 10px;">
         <button class="shipping-btn" onclick="ShippingModal.open('add-customer-modal')">+ إضافة عميل جديد</button>
     </div>
+</div>
+
+<!-- Professional Search Engine for Customers -->
+<div class="shipping-search-engine-block">
+    <form id="customer-advanced-search" style="display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 15px; align-items: end;">
+        <div class="shipping-form-group" style="margin-bottom:0;">
+            <label style="font-size: 12px; font-weight: 700; color: #64748b;">بحث شامل (الاسم، الهاتف، البريد، الكود):</label>
+            <input type="text" id="customer-search-query" class="shipping-input" placeholder="أدخل بيانات البحث..." oninput="CustomersController.filterCustomers()">
+        </div>
+        <div class="shipping-form-group" style="margin-bottom:0;">
+            <label style="font-size: 12px; font-weight: 700; color: #64748b;">تصفية حسب التصنيف:</label>
+            <select id="customer-filter-class" class="shipping-select" onchange="CustomersController.filterCustomers()">
+                <option value="">كافة التصنيفات</option>
+                <option value="regular">REGULAR</option>
+                <option value="vip">VIP</option>
+                <option value="corporate">CORPORATE</option>
+            </select>
+        </div>
+        <div class="shipping-form-group" style="margin-bottom:0;">
+            <label style="font-size: 12px; font-weight: 700; color: #64748b;">ترتيب العملاء:</label>
+            <select id="customer-sort-order" class="shipping-select" onchange="CustomersController.filterCustomers()">
+                <option value="newest">المسجلون حديثاً</option>
+                <option value="oldest">الأقدم</option>
+                <option value="name_asc">الاسم (أ-ي)</option>
+                <option value="name_desc">الاسم (ي-أ)</option>
+            </select>
+        </div>
+        <button type="button" onclick="CustomersController.resetFilters()" class="shipping-btn shipping-btn-outline" style="height: 45px; width: auto;">إعادة ضبط</button>
+    </form>
 </div>
 
 <div class="shipping-card">
@@ -31,7 +54,11 @@
                 if(empty($customers)): ?>
                     <tr><td colspan="5" style="text-align:center; padding:40px; color:#94a3b8;">لا يوجد عملاء مسجلين حالياً.</td></tr>
                 <?php else: foreach($customers as $c): ?>
-                    <tr class="customer-entry-row" data-search="<?php echo esc_attr(strtolower($c->name . ' ' . $c->email . ' ' . $c->phone . ' ' . $c->username)); ?>">
+                    <tr class="customer-entry-row"
+                        data-search="<?php echo esc_attr(strtolower($c->name . ' ' . $c->email . ' ' . $c->phone . ' ' . $c->username)); ?>"
+                        data-class="<?php echo strtolower($c->classification ?: 'regular'); ?>"
+                        data-name="<?php echo esc_attr($c->name); ?>"
+                        data-id="<?php echo $c->id; ?>">
                         <td>
                             <div style="display:flex; align-items:center; gap:12px;">
                                 <div style="width:40px; height:40px; border-radius:50%; background:#f1f5f9; display:flex; align-items:center; justify-content:center; overflow:hidden; border:1px solid #e2e8f0;">
@@ -58,7 +85,10 @@
                         </td>
                         <td><span class="shipping-badge" style="background:#edf2f7; color:#4a5568;"><?php echo esc_html(strtoupper($c->classification ?: 'REGULAR')); ?></span></td>
                         <td>
-                            <button onclick="CustomersController.viewCustomerDossier(<?php echo $c->id; ?>)" class="shipping-btn-outline" style="padding:5px 12px; font-size:11px;">إدارة الملف الشامل</button>
+                            <div style="display:flex; gap:6px;">
+                                <button onclick="CustomersController.viewCustomerDossier(<?php echo $c->id; ?>)" class="shipping-btn-outline" style="padding:6px 10px; font-size:11px;">الملف الشامل</button>
+                                <button onclick="CustomersController.openEditSimple(<?php echo htmlspecialchars(json_encode($c)); ?>)" class="shipping-btn-outline" style="padding:6px 10px; font-size:11px; color:#2d3748; border-color:#2d3748;">تعديل سريع</button>
+                            </div>
                         </td>
                     </tr>
                 <?php endforeach; endif; ?>

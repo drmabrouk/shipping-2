@@ -1,17 +1,35 @@
 <?php if (!defined('ABSPATH')) exit;
 $sub = $_GET['sub'] ?? 'documentation';
 ?>
-<div class="shipping-admin-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; background: #fff; padding: 20px; border-radius: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-    <div class="shipping-tabs-wrapper" style="display: flex; gap: 15px; overflow-x: auto; white-space: nowrap; padding-bottom: 5px;">
-        <button class="shipping-tab-btn <?php echo $sub == 'documentation' ? 'shipping-active' : ''; ?>" onclick="shippingOpenInternalTab('customs-docs', this); loadCustomsDocs()">الوثائق والمستندات</button>
-        <button class="shipping-tab-btn <?php echo $sub == 'invoices' ? 'shipping-active' : ''; ?>" onclick="shippingOpenInternalTab('customs-invoices', this); loadCustomsInvoices()">الفواتير التجارية</button>
+<div class="shipping-admin-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+    <div class="shipping-tabs-wrapper" style="display: flex; gap: 15px; overflow-x: auto; white-space: nowrap; padding-bottom: 5px; margin-bottom: 0; border-bottom: none;">
+        <button class="shipping-tab-btn <?php echo $sub == 'documentation' ? 'shipping-active' : ''; ?>" onclick="shippingOpenInternalTab('customs-docs', this); CustomsController.loadDocs()">الوثائق والمستندات</button>
+        <button class="shipping-tab-btn <?php echo $sub == 'invoices' ? 'shipping-active' : ''; ?>" onclick="shippingOpenInternalTab('customs-invoices', this); CustomsController.loadInvoices()">الفواتير التجارية</button>
         <button class="shipping-tab-btn <?php echo $sub == 'duties-taxes' ? 'shipping-active' : ''; ?>" onclick="shippingOpenInternalTab('customs-taxes', this)">الرسوم والضرائب</button>
-        <button class="shipping-tab-btn <?php echo $sub == 'status' ? 'shipping-active' : ''; ?>" onclick="shippingOpenInternalTab('customs-status', this); loadCustomsStatus()">حالة التخليص</button>
+        <button class="shipping-tab-btn <?php echo $sub == 'status' ? 'shipping-active' : ''; ?>" onclick="shippingOpenInternalTab('customs-status', this); CustomsController.loadStatus()">حالة التخليص</button>
     </div>
     <div style="display: flex; gap: 10px;">
         <button class="shipping-btn" onclick="ShippingModal.open('modal-add-customs')">+ بيان جمركي</button>
         <button class="shipping-btn" style="background: #4a5568;" onclick="ShippingModal.open('modal-add-customs-doc')">+ رفع مستند</button>
     </div>
+</div>
+
+<!-- Professional Search Engine for Customs -->
+<div class="shipping-search-engine-block" id="customs-search-block">
+    <form id="customs-advanced-search" style="display: grid; grid-template-columns: 2fr 1fr auto; gap: 15px; align-items: end;">
+        <div class="shipping-form-group" style="margin-bottom:0;">
+            <label style="font-size: 12px; font-weight: 700; color: #64748b;">بحث شامل (رقم الشحنة):</label>
+            <input type="text" id="customs-search-query" class="shipping-input" placeholder="أدخل بيانات البحث..." oninput="CustomsController.filterCustoms()">
+        </div>
+        <div class="shipping-form-group" style="margin-bottom:0;">
+            <label style="font-size: 12px; font-weight: 700; color: #64748b;">ترتيب حسب:</label>
+            <select id="customs-sort-order" class="shipping-select" onchange="CustomsController.filterCustoms()">
+                <option value="newest">الأحدث أولاً</option>
+                <option value="oldest">الأقدم أولاً</option>
+            </select>
+        </div>
+        <button type="button" onclick="CustomsController.resetFilters()" class="shipping-btn shipping-btn-outline" style="height: 45px; width: auto;">إعادة ضبط</button>
+    </form>
 </div>
 
 <div id="customs-invoices" class="shipping-internal-tab" style="display: <?php echo $sub == 'invoices' ? 'block' : 'none'; ?>;">

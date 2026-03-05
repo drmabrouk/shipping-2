@@ -32,11 +32,34 @@ window.LogisticsController = {
         if (!activeTab) return;
 
         const onclick = activeTab.getAttribute('onclick');
-        if (onclick.includes('logistic-live')) this.initTrackingMap();
-        else if (onclick.includes('logistic-routes')) this.loadRoutes();
-        else if (onclick.includes('logistic-warehouse')) this.loadWarehouses();
-        else if (onclick.includes('logistic-fleet')) this.loadFleet();
-        else if (onclick.includes('logistic-analytics')) this.loadAnalytics();
+        const searchBlock = document.getElementById('logistics-search-block');
+        const searchLabel = document.getElementById('logistics-search-label');
+
+        if (onclick.includes('logistic-live')) {
+            this.initTrackingMap();
+            if (searchBlock) searchBlock.style.display = 'none';
+        } else if (onclick.includes('logistic-routes')) {
+            this.loadRoutes();
+            if (searchBlock) {
+                searchBlock.style.display = 'block';
+                searchLabel.innerText = 'بحث في المسارات:';
+            }
+        } else if (onclick.includes('logistic-warehouse')) {
+            this.loadWarehouses();
+            if (searchBlock) {
+                searchBlock.style.display = 'block';
+                searchLabel.innerText = 'بحث في المستودعات:';
+            }
+        } else if (onclick.includes('logistic-fleet')) {
+            this.loadFleet();
+            if (searchBlock) {
+                searchBlock.style.display = 'block';
+                searchLabel.innerText = 'بحث في الأسطول:';
+            }
+        } else if (onclick.includes('logistic-analytics')) {
+            this.loadAnalytics();
+            if (searchBlock) searchBlock.style.display = 'none';
+        }
     },
 
     setupEventListeners() {
@@ -76,6 +99,31 @@ window.LogisticsController = {
                 });
             });
         }
+    },
+
+    filterLogistics() {
+        const query = document.getElementById('logistics-search-query').value.toLowerCase();
+        const activeTab = document.querySelector('.shipping-tab-btn.shipping-active').getAttribute('onclick');
+
+        if (activeTab.includes('logistic-routes')) {
+            this.filterItems('.shipping-table tbody tr', query);
+        } else if (activeTab.includes('logistic-warehouse')) {
+            this.filterItems('.warehouse-card', query);
+        } else if (activeTab.includes('logistic-fleet')) {
+            this.filterItems('.vehicle-card', query);
+        }
+    },
+
+    filterItems(selector, query) {
+        document.querySelectorAll(selector).forEach(el => {
+            const text = el.innerText.toLowerCase();
+            el.style.display = !query || text.includes(query) ? '' : 'none';
+        });
+    },
+
+    resetFilters() {
+        document.getElementById('logistics-advanced-search').reset();
+        this.filterLogistics();
     },
 
     // --- Tracking ---
@@ -511,8 +559,3 @@ window.LogisticsController = {
     }
 };
 
-document.addEventListener('DOMContentLoaded', () => {
-    if (document.getElementById('logistic-live') || document.getElementById('tracking-map')) {
-        LogisticsController.init();
-    }
-});

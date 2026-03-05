@@ -109,25 +109,91 @@ window.CustomsController = {
     },
 
     loadStatus() {
-        fetch(ajaxurl + '?action=shipping_get_customs_status&nonce=' + shippingVars.customsNonce)
+        this.filterCustoms();
+    },
+
+    filterCustoms() {
+        const query = document.getElementById('customs-search-query').value.toLowerCase();
+        const sortOrder = document.getElementById('customs-sort-order').value;
+        const activeTab = document.querySelector('.shipping-tab-btn.shipping-active').getAttribute('onclick');
+
+        let action = 'shipping_get_customs_docs';
+        if (activeTab.includes('customs-status')) action = 'shipping_get_customs_status';
+
+        fetch(ajaxurl + `?action=${action}&nonce=` + shippingVars.customsNonce)
         .then(r => r.json()).then(res => {
-            const tbody = document.getElementById('customs-status-table');
-            if (!tbody) return;
-            if (!res.data.length) { tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">لا توجد بيانات تخليص</td></tr>'; return; }
-            tbody.innerHTML = res.data.map(c => `
-                <tr>
-                    <td><strong>${c.shipment_number}</strong></td>
-                    <td>${c.documentation_status}</td>
-                    <td>${parseFloat(c.duties_amount).toFixed(2)} ${window.shippingCurrency || ''}</td>
-                    <td><span class="shipping-badge">${c.clearance_status}</span></td>
-                </tr>
-            `).join('');
+            if (activeTab.includes('customs-docs')) {
+                this.renderDocs(res.data, query, sortOrder);
+            } else if (activeTab.includes('customs-invoices')) {
+                this.renderInvoices(res.data, query, sortOrder);
+            } else if (activeTab.includes('customs-status')) {
+                this.renderStatus(res.data, query, sortOrder);
+            }
         });
+    },
+
+    renderDocs(data, query, sort) {
+        const tbody = document.getElementById('customs-docs-table');
+        if (!tbody) return;
+        let filtered = data.filter(d => d.doc_type !== 'Commercial Invoice');
+        if (query) filtered = filtered.filter(d => d.shipment_id.toString().includes(query));
+
+        filtered.sort((a, b) => sort === 'newest' ? b.id - a.id : a.id - b.id);
+
+        if (!filtered.length) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">لا توجد مستندات مطابقة</td></tr>'; return; }
+        tbody.innerHTML = filtered.map(d => `
+            <tr>
+                <td><strong>#${d.shipment_id}</strong></td>
+                <td>${d.doc_type}</td>
+                <td><span class="shipping-badge">${d.status}</span></td>
+                <td>${d.uploaded_at}</td>
+                <td><a href="${d.file_url}" target="_blank" class="shipping-btn-outline" style="padding:4px 8px; font-size:11px;">معاينة</a></td>
+            </tr>
+        `).join('');
+    },
+
+    renderInvoices(data, query, sort) {
+        const tbody = document.getElementById('customs-invoices-table');
+        if (!tbody) return;
+        let filtered = data.filter(d => d.doc_type === 'Commercial Invoice');
+        if (query) filtered = filtered.filter(d => d.shipment_id.toString().includes(query));
+
+        filtered.sort((a, b) => sort === 'newest' ? b.id - a.id : a.id - b.id);
+
+        if (!filtered.length) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">لا توجد فواتير مطابقة</td></tr>'; return; }
+        tbody.innerHTML = filtered.map(d => `
+            <tr>
+                <td><strong>#${d.shipment_id}</strong></td>
+                <td>CIN-${d.id}</td>
+                <td>---</td>
+                <td><span class="shipping-badge">${d.status}</span></td>
+                <td><a href="${d.file_url}" target="_blank" class="shipping-btn-outline" style="padding:4px 8px; font-size:11px;">عرض الفاتورة</a></td>
+            </tr>
+        `).join('');
+    },
+
+    renderStatus(data, query, sort) {
+        const tbody = document.getElementById('customs-status-table');
+        if (!tbody) return;
+        let filtered = data;
+        if (query) filtered = filtered.filter(c => c.shipment_number.toLowerCase().includes(query));
+
+        filtered.sort((a, b) => sort === 'newest' ? b.id - a.id : a.id - b.id);
+
+        if (!filtered.length) { tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">لا توجد بيانات مطابقة</td></tr>'; return; }
+        tbody.innerHTML = filtered.map(c => `
+            <tr>
+                <td><strong>${c.shipment_number}</strong></td>
+                <td>${c.documentation_status}</td>
+                <td>${parseFloat(c.duties_amount).toFixed(2)} ${window.shippingCurrency || ''}</td>
+                <td><span class="shipping-badge">${c.clearance_status}</span></td>
+            </tr>
+        `).join('');
+    },
+
+    resetFilters() {
+        document.getElementById('customs-advanced-search').reset();
+        this.filterCustoms();
     }
 };
 
-document.addEventListener('DOMContentLoaded', () => {
-    if (document.getElementById('customs-docs') || document.getElementById('customs-status')) {
-        CustomsController.init();
-    }
-});

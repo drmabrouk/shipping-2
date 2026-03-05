@@ -254,6 +254,3 @@ window.AdminController = {
     }
 };
 
-document.addEventListener('DOMContentLoaded', () => {
-    AdminController.init();
-});

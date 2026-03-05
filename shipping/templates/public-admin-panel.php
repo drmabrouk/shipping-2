@@ -1,14 +1,10 @@
 <?php if (!defined('ABSPATH')) exit; ?>
 <script>
 window.shippingOpenAddShipmentModal = function() {
-    const url = '<?php echo admin_url("admin.php?page=shipping-admin&shipping_tab=shipment-mgmt&trigger_add=1"); ?>';
-    if (window.location.href.indexOf('shipping_tab=shipment-mgmt') !== -1) {
-        if (typeof ShipmentsController !== 'undefined') {
-            ShipmentsController.openCreationModal();
-        } else {
-            window.location.href = url;
-        }
+    if (typeof ShipmentsController !== 'undefined') {
+        ShipmentsController.openCreationModal();
     } else {
+        const url = '<?php echo admin_url("admin.php?page=shipping-admin&shipping_tab=shipment-mgmt&trigger_add=1"); ?>';
         window.location.href = url;
     }
 };
@@ -380,7 +376,7 @@ $greeting = ($hour >= 5 && $hour < 12) ? 'صباح الخير' : 'مساء ال�
                     if ($is_admin || $is_sys_admin || $is_administrator) {
                         $sub = $_GET['sub'] ?? 'init';
                         ?>
-                        <div class="shipping-tabs-wrapper" style="display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #eee; overflow-x: auto; white-space: nowrap; padding-bottom: 10px;">
+                        <div class="shipping-tabs-wrapper" style="display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #eee; overflow-x: auto; white-space: nowrap; padding-bottom: 10px; margin-top: 0;">
                             <button class="shipping-tab-btn <?php echo $sub == 'init' ? 'shipping-active' : ''; ?>" onclick="shippingOpenInternalTab('shipping-settings', this)">تهيئة النظام</button>
                             <button class="shipping-tab-btn <?php echo $sub == 'users-management' ? 'shipping-active' : ''; ?>" onclick="shippingOpenInternalTab('system-user-management', this)">إدارة المستخدمين والأذونات</button>
                             <button class="shipping-tab-btn <?php echo $sub == 'notifications' ? 'shipping-active' : ''; ?>" onclick="shippingOpenInternalTab('notification-settings', this)">التنبيهات والبريد</button>
@@ -730,6 +726,8 @@ $greeting = ($hour >= 5 && $hour < 12) ? 'صباح الخير' : 'مساء ال�
         </div>
     </div>
 </div>
+
+<?php include SHIPPING_PLUGIN_DIR . 'templates/common-modals.php'; ?>
 
 <!-- Page Edit Modal -->
 <div id="shipping-edit-page-modal" class="shipping-modal-overlay">
