@@ -316,10 +316,22 @@ window.ShipmentsController = {
         e.preventDefault();
         const form = e.target;
         const btn = form.querySelector('button[type="submit"]');
+        if (!btn) return;
+
         btn.disabled = true;
         btn.innerHTML = '<span class="dashicons dashicons-update spin"></span> جاري المعالجة...';
 
         const fd = new FormData(form);
+
+        // Manual mapping if selects are used
+        const oc = form.querySelector('[name="origin_country"]')?.value || '';
+        const oci = form.querySelector('[name="origin_city"]')?.value || '';
+        const dc = form.querySelector('[name="destination_country"]')?.value || '';
+        const dci = form.querySelector('[name="destination_city"]')?.value || '';
+
+        if (oc && oci) fd.set('origin', oc + ', ' + oci);
+        if (dc && dci) fd.set('destination', dc + ', ' + dci);
+
         fd.append('action', 'shipping_create_shipment');
         fd.append('nonce', shippingVars.shipmentNonce);
 
@@ -331,6 +343,11 @@ window.ShipmentsController = {
 
                 // Show Success & Print Selection Modal
                 this.showCreationSuccess(d);
+
+                // If on shipments list page, refresh
+                if (document.getElementById('shipment-management-unified')) {
+                    setTimeout(() => location.reload(), 1500);
+                }
             } else {
                 btn.disabled = false;
                 btn.innerText = 'تأكيد وإنشاء الشحنة';
@@ -578,8 +595,3 @@ window.ShipmentsController = {
     }
 };
 
-document.addEventListener('DOMContentLoaded', () => {
-    if (document.getElementById('shipment-registry') || document.getElementById('track-number')) {
-        ShipmentsController.init();
-    }
-});

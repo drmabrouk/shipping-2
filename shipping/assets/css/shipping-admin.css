@@ -424,3 +424,51 @@
     overflow: hidden;
     white-space: nowrap;
 }
+
+/* --- Standardized Status Badges --- */
+.pastel-badge {
+    padding: 6px 12px;
+    border-radius: 50px;
+    font-size: 11px;
+    font-weight: 700;
+    display: inline-block;
+    text-transform: uppercase;
+}
+
+/* Shipment Statuses */
+.status-pending { background: #fed7d7; color: #9b2c2c; }
+.status-in-transit { background: #feebc8; color: #9c4221; }
+.status-delivered { background: #c6f6d5; color: #22543d; }
+.status-cancelled, .status-delayed { background: #edf2f7; color: #4a5568; }
+.status-out-for-delivery { background: #bee3f8; color: #2b6cb0; }
+
+/* Customer/Account Statuses */
+.status-active { background: #c6f6d5; color: #22543d; }
+.status-restricted, .status-blocked { background: #fed7d7; color: #9b2c2c; }
+
+/* Order Statuses */
+.status-new { background: #e9d8fd; color: #553c9a; }
+.status-completed { background: #c6f6d5; color: #22543d; }
+
+/* Shared Utilities */
+.spin { animation: spin 2s linear infinite; }
+@keyframes spin { 100% { transform: rotate(360deg); } }
+
+.shipping-loader-mini {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid var(--shipping-primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    display: inline-block;
+}
+
+.shipping-search-engine-block {
+    background: white;
+    padding: 25px;
+    border: 1px solid var(--shipping-border-color);
+    border-radius: 12px;
+    margin-bottom: 25px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}

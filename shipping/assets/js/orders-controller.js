@@ -26,6 +26,7 @@ window.OrdersController = {
         this.currentStatus = status;
         const searchInput = document.getElementById('order-search');
         const search = searchInput ? searchInput.value : '';
+        const sortOrder = document.getElementById('order-sort-order')?.value || 'newest';
         const tbody = document.getElementById('table-body-' + status);
         if (!tbody) return;
 
@@ -37,8 +38,24 @@ window.OrdersController = {
                 tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:30px; color:#94a3b8;">لا توجد طلبات متوفرة</td></tr>';
                 return;
             }
-            tbody.innerHTML = res.data.map(o => this.renderOrderRow(o)).join('');
+
+            let orders = res.data;
+            // Sorting
+            orders.sort((a, b) => {
+                if (sortOrder === 'newest') return parseInt(b.id) - parseInt(a.id);
+                if (sortOrder === 'oldest') return parseInt(a.id) - parseInt(b.id);
+                if (sortOrder === 'amount_desc') return parseFloat(b.total_amount) - parseFloat(a.total_amount);
+                if (sortOrder === 'amount_asc') return parseFloat(a.total_amount) - parseFloat(b.total_amount);
+                return 0;
+            });
+
+            tbody.innerHTML = orders.map(o => this.renderOrderRow(o)).join('');
         });
+    },
+
+    resetFilters() {
+        document.getElementById('order-advanced-search').reset();
+        this.loadOrders();
     },
 
     renderOrderRow(o) {
@@ -265,8 +282,3 @@ window.OrdersController = {
     }
 };
 
-document.addEventListener('DOMContentLoaded', () => {
-    if (document.getElementById('table-body-new') || document.getElementById('order-search')) {
-        OrdersController.init();
-    }
-});

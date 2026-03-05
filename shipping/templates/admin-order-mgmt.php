@@ -2,20 +2,36 @@
 global $wpdb;
 $sub = $_GET['sub'] ?? 'new-orders';
 ?>
-<div class="shipping-admin-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; background: #fff; padding: 20px; border-radius: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-    <div class="shipping-tabs-wrapper" style="display: flex; gap: 15px; overflow-x: auto; white-space: nowrap; padding-bottom: 5px;">
+<div class="shipping-admin-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+    <div class="shipping-tabs-wrapper" style="display: flex; gap: 15px; overflow-x: auto; white-space: nowrap; padding-bottom: 5px; margin-bottom: 0; border-bottom: none;">
         <button class="shipping-tab-btn <?php echo $sub == 'new-orders' ? 'shipping-active' : ''; ?>" onclick="shippingOpenInternalTab('order-new', this); OrdersController.loadOrders('new')">طلبات جديدة</button>
         <button class="shipping-tab-btn <?php echo $sub == 'in-progress' ? 'shipping-active' : ''; ?>" onclick="shippingOpenInternalTab('order-progress', this); OrdersController.loadOrders('in-progress')">قيد التنفيذ</button>
         <button class="shipping-tab-btn <?php echo $sub == 'completed' ? 'shipping-active' : ''; ?>" onclick="shippingOpenInternalTab('order-completed', this); OrdersController.loadOrders('completed')">مكتملة</button>
         <button class="shipping-tab-btn <?php echo $sub == 'cancelled' ? 'shipping-active' : ''; ?>" onclick="shippingOpenInternalTab('order-cancelled', this); OrdersController.loadOrders('cancelled')">ملغاة</button>
     </div>
     <div style="display: flex; gap: 10px;">
-        <div class="shipping-search-box" style="position: relative;">
-            <input type="text" id="order-search" class="shipping-input" placeholder="بحث برقم الطلب أو العميل..." oninput="OrdersController.debounceSearch()" style="width: 250px; padding-right: 35px;">
-            <span class="dashicons dashicons-search" style="position: absolute; right: 10px; top: 10px; color: #94a3b8;"></span>
-        </div>
         <button class="shipping-btn" onclick="OrdersController.openAddModal()">+ طلب جديد</button>
     </div>
+</div>
+
+<!-- Professional Search Engine for Orders -->
+<div class="shipping-search-engine-block">
+    <form id="order-advanced-search" style="display: grid; grid-template-columns: 2fr 1fr auto; gap: 15px; align-items: end;">
+        <div class="shipping-form-group" style="margin-bottom:0;">
+            <label style="font-size: 12px; font-weight: 700; color: #64748b;">بحث شامل (رقم الطلب، العميل، العنوان):</label>
+            <input type="text" id="order-search" class="shipping-input" placeholder="أدخل بيانات البحث..." oninput="OrdersController.debounceSearch()">
+        </div>
+        <div class="shipping-form-group" style="margin-bottom:0;">
+            <label style="font-size: 12px; font-weight: 700; color: #64748b;">ترتيب حسب:</label>
+            <select id="order-sort-order" class="shipping-select" onchange="OrdersController.loadOrders()">
+                <option value="newest">الأحدث أولاً</option>
+                <option value="oldest">الأقدم أولاً</option>
+                <option value="amount_desc">المبلغ (الأعلى)</option>
+                <option value="amount_asc">المبلغ (الأقل)</option>
+            </select>
+        </div>
+        <button type="button" onclick="OrdersController.resetFilters()" class="shipping-btn shipping-btn-outline" style="height: 45px; width: auto;">إعادة ضبط</button>
+    </form>
 </div>
 
 <div class="shipping-bulk-actions" id="order-bulk-bar" style="display: none; background: #f8fafc; padding: 15px 20px; border-radius: 10px; border: 1px solid #e2e8f0; margin-bottom: 20px; align-items: center; gap: 15px; animation: slideIn 0.3s ease;">

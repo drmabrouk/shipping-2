@@ -105,6 +105,28 @@ window.shippingOpenInternalTab = function(tabId, btn) {
     const target = document.getElementById(tabId);
     if (target) target.style.display = 'block';
 
+    // Contextual UI updates for standardized search
+    const billingSearch = document.getElementById('billing-search-block');
+    if (billingSearch) {
+        billingSearch.style.display = (tabId === 'billing-records' || tabId === 'billing-balances') ? 'block' : 'none';
+    }
+
+    const logisticsSearch = document.getElementById('logistics-search-block');
+    if (logisticsSearch) {
+        logisticsSearch.style.display = (tabId === 'logistic-routes' || tabId === 'logistic-warehouse' || tabId === 'logistic-fleet') ? 'block' : 'none';
+        const label = document.getElementById('logistics-search-label');
+        if (label) {
+            if (tabId === 'logistic-routes') label.innerText = 'بحث في المسارات:';
+            else if (tabId === 'logistic-warehouse') label.innerText = 'بحث في المستودعات:';
+            else if (tabId === 'logistic-fleet') label.innerText = 'بحث في الأسطول:';
+        }
+    }
+
+    const customsSearch = document.getElementById('customs-search-block');
+    if (customsSearch) {
+        customsSearch.style.display = (tabId === 'customs-docs' || tabId === 'customs-invoices' || tabId === 'customs-status') ? 'block' : 'none';
+    }
+
     // Update button active state
     const btns = btn.parentElement.querySelectorAll('.shipping-tab-btn');
     btns.forEach(b => b.classList.remove('shipping-active'));
@@ -145,6 +167,22 @@ window.shippingShowNotification = function(message, type = 'success') {
 document.addEventListener('DOMContentLoaded', () => {
     ShippingState.init();
     ShippingModal.initOverlayClose();
+
+    // Global Controller Init
+    // We initialize them regardless of specific IDs to ensure global modals/buttons work
+    if (typeof ShipmentsController !== 'undefined') ShipmentsController.init();
+    if (typeof CustomersController !== 'undefined') CustomersController.init();
+    if (typeof OrdersController !== 'undefined') OrdersController.init();
+    if (typeof BillingController !== 'undefined') BillingController.init();
+    if (typeof CustomsController !== 'undefined') CustomsController.init();
+    if (typeof LogisticsController !== 'undefined') LogisticsController.init();
+    if (typeof AdminController !== 'undefined') AdminController.init();
+
+    // Tickets support - initialized via inline script in template but safe to check
+    if (typeof TicketsController !== 'undefined' && document.getElementById('shipping-tickets-grid')) {
+        // TicketsController init is usually called with config, so we don't auto-init here
+        // but it's good to have it in mind.
+    }
 });
 
 // Add slideInRight animation to CSS if not present

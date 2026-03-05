@@ -231,6 +231,45 @@ window.BillingController = {
         fetch(ajaxurl, { method: 'POST', body: fd }).then(() => this.loadFees());
     },
 
+    filterBilling() {
+        const query = document.getElementById('billing-search-query').value.toLowerCase();
+        const sortOrder = document.getElementById('billing-sort-order').value;
+        const activeTab = document.querySelector('.shipping-tab-btn.shipping-active').getAttribute('onclick');
+
+        let rows = [];
+        let tbody = null;
+
+        if (activeTab.includes('billing-records')) {
+            rows = Array.from(document.querySelectorAll('.billing-record-row'));
+            tbody = document.getElementById('billing-records-list');
+        } else if (activeTab.includes('billing-balances')) {
+            rows = Array.from(document.querySelectorAll('.billing-balance-row'));
+            tbody = document.getElementById('billing-balances-list');
+        }
+
+        if (!tbody) return;
+
+        rows.forEach(row => {
+            const text = (row.dataset.number + row.dataset.customer).toLowerCase();
+            row.style.display = !query || text.includes(query) ? '' : 'none';
+        });
+
+        // Sorting
+        const sortedRows = rows.sort((a, b) => {
+            if (sortOrder === 'newest') return new Date(b.dataset.date) - new Date(a.dataset.date);
+            if (sortOrder === 'oldest') return new Date(a.dataset.date) - new Date(b.dataset.date);
+            if (sortOrder === 'amount_desc') return parseFloat(b.dataset.amount) - parseFloat(a.dataset.amount);
+            if (sortOrder === 'amount_asc') return parseFloat(a.dataset.amount) - parseFloat(b.dataset.amount);
+            return 0;
+        });
+        sortedRows.forEach(row => tbody.appendChild(row));
+    },
+
+    resetFilters() {
+        document.getElementById('billing-advanced-search').reset();
+        this.filterBilling();
+    },
+
     initCharts() {
         const ctx = document.getElementById('revenueChart')?.getContext('2d');
         if(!ctx) return;
@@ -269,8 +308,3 @@ window.BillingController = {
     }
 };
 
-document.addEventListener('DOMContentLoaded', () => {
-    if (document.getElementById('billing-invoice') || document.getElementById('revenueChart')) {
-        BillingController.init();
-    }
-});

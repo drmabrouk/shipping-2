@@ -37,11 +37,56 @@ window.CustomersController = {
     },
 
     filterCustomers() {
-        const query = document.getElementById('customer-search-engine').value.toLowerCase();
-        document.querySelectorAll('.customer-entry-row').forEach(row => {
+        const query = document.getElementById('customer-search-query').value.toLowerCase();
+        const filterClass = document.getElementById('customer-filter-class').value;
+        const sortOrder = document.getElementById('customer-sort-order').value;
+        const rows = Array.from(document.querySelectorAll('.customer-entry-row'));
+
+        rows.forEach(row => {
             const searchData = row.getAttribute('data-search');
-            row.style.display = searchData.includes(query) ? '' : 'none';
+            const rowClass = row.getAttribute('data-class');
+
+            const matchesQuery = !query || searchData.includes(query);
+            const matchesClass = !filterClass || rowClass === filterClass;
+
+            row.style.display = (matchesQuery && matchesClass) ? '' : 'none';
         });
+
+        // Sorting
+        const tbody = document.getElementById('unified-customer-list');
+        const sortedRows = rows.sort((a, b) => {
+            if (sortOrder === 'newest') return parseInt(b.dataset.id) - parseInt(a.dataset.id);
+            if (sortOrder === 'oldest') return parseInt(a.dataset.id) - parseInt(b.dataset.id);
+            if (sortOrder === 'name_asc') return a.dataset.name.localeCompare(b.dataset.name);
+            if (sortOrder === 'name_desc') return b.dataset.name.localeCompare(a.dataset.name);
+            return 0;
+        });
+        sortedRows.forEach(row => tbody.appendChild(row));
+    },
+
+    resetFilters() {
+        document.getElementById('customer-advanced-search').reset();
+        this.filterCustomers();
+    },
+
+    openEditSimple(c) {
+        this.activeCustomerId = c.id;
+        const form = document.getElementById('shipping-add-customer-form');
+        if (!form) return;
+
+        form.first_name.value = c.first_name;
+        form.last_name.value = c.last_name;
+        form.username.value = c.username;
+        form.email.value = c.email;
+        form.phone.value = c.phone;
+        form.residence_city.value = c.residence_city || '';
+        form.classification.value = c.classification || 'regular';
+
+        const modal = document.getElementById('add-customer-modal');
+        modal.querySelector('h3').innerText = 'تعديل بيانات العميل: ' + c.name;
+        modal.querySelector('button[type="submit"]').innerText = 'تحديث البيانات';
+
+        ShippingModal.open('add-customer-modal');
     },
 
     viewCustomerDossier(id) {
@@ -204,20 +249,27 @@ window.CustomersController = {
         const form = e.target;
         const btn = form.querySelector('button[type="submit"]');
         btn.disabled = true;
-        btn.innerText = 'جاري الحفظ...';
+
+        const isUpdate = this.activeCustomerId !== null && form.querySelector('button[type="submit"]').innerText.includes('تحديث');
+        btn.innerText = isUpdate ? 'جاري التحديث...' : 'جاري الحفظ...';
 
         const fd = new FormData(form);
-        fd.append('action', 'shipping_add_customer_ajax');
+        if (isUpdate) {
+            fd.append('action', 'shipping_update_customer_ajax');
+            fd.append('customer_id', this.activeCustomerId);
+        } else {
+            fd.append('action', 'shipping_add_customer_ajax');
+        }
         fd.append('shipping_nonce', shippingVars.customerNonce);
 
         fetch(ajaxurl, { method: 'POST', body: fd })
         .then(r => r.json()).then(res => {
             btn.disabled = false;
-            btn.innerText = 'حفظ بيانات العميل';
+            btn.innerText = isUpdate ? 'تحديث البيانات' : 'حفظ بيانات العميل';
             if (res.success) {
-                shippingShowNotification('تمت إضافة العميل بنجاح');
+                shippingShowNotification(isUpdate ? 'تم تحديث العميل بنجاح' : 'تمت إضافة العميل بنجاح');
                 ShippingModal.close('add-customer-modal');
-                location.reload(); // Refresh to update list, or we could update DOM
+                location.reload();
             } else {
                 alert(res.data);
             }
@@ -276,8 +328,3 @@ window.CustomersController = {
     }
 };
 
-document.addEventListener('DOMContentLoaded', () => {
-    if (document.getElementById('customer-profiles') || document.getElementById('contracts-table-body')) {
-        CustomersController.init();
-    }
-});

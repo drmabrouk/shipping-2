@@ -57,6 +57,14 @@ class Shipping_Admin {
 
         // Modular JS Controllers
         wp_enqueue_script('shipping-core', SHIPPING_PLUGIN_URL . 'assets/js/shipping-core.js', array('jquery'), $this->version, true);
+        wp_enqueue_script('shipping-orders', SHIPPING_PLUGIN_URL . 'assets/js/orders-controller.js', array('shipping-core'), $this->version, true);
+        wp_enqueue_script('shipping-customers', SHIPPING_PLUGIN_URL . 'assets/js/customers-controller.js', array('shipping-core'), $this->version, true);
+        wp_enqueue_script('shipping-shipments', SHIPPING_PLUGIN_URL . 'assets/js/shipments-controller.js', array('shipping-core'), $this->version, true);
+        wp_enqueue_script('shipping-logistics', SHIPPING_PLUGIN_URL . 'assets/js/logistics-controller.js', array('shipping-core', 'leaflet-js', 'chart-js'), $this->version, true);
+        wp_enqueue_script('shipping-billing', SHIPPING_PLUGIN_URL . 'assets/js/billing-controller.js', array('shipping-core', 'chart-js'), $this->version, true);
+        wp_enqueue_script('shipping-customs', SHIPPING_PLUGIN_URL . 'assets/js/customs-controller.js', array('shipping-core'), $this->version, true);
+        wp_enqueue_script('shipping-users', SHIPPING_PLUGIN_URL . 'assets/js/users-controller.js', array('shipping-core'), $this->version, true);
+        wp_enqueue_script('shipping-tickets', SHIPPING_PLUGIN_URL . 'assets/js/tickets-controller.js', array('shipping-core'), $this->version, true);
         wp_enqueue_script('shipping-admin', SHIPPING_PLUGIN_URL . 'assets/js/admin-controller.js', array('shipping-core'), $this->version, true);
 
         $info = Shipping_Settings::get_shipping_info();
@@ -65,7 +73,20 @@ class Shipping_Admin {
             'adminUrl' => admin_url('admin.php?page=shipping-admin'),
             'currency' => $info['currency'] ?? 'SAR',
             'nonce' => wp_create_nonce('shipping_admin_action'),
+            'shipmentNonce' => wp_create_nonce('shipping_shipment_action'),
+            'orderNonce' => wp_create_nonce('shipping_order_action'),
+            'logisticNonce' => wp_create_nonce('shipping_logistic_action'),
+            'billingNonce' => wp_create_nonce('shipping_billing_action'),
+            'customsNonce' => wp_create_nonce('shipping_customs_action'),
+            'ticketNonce' => wp_create_nonce('shipping_ticket_action'),
+            'customerNonce' => wp_create_nonce('shipping_add_customer'),
+            'deleteCustomerNonce' => wp_create_nonce('shipping_delete_customer'),
+            'pricingNonce' => wp_create_nonce('shipping_pricing_action'),
+            'messageNonce' => wp_create_nonce('shipping_message_action'),
+            'staffNonce' => wp_create_nonce('shippingCustomerAction'),
             'profileNonce' => wp_create_nonce('shipping_profile_action'),
+            'photoNonce' => wp_create_nonce('shipping_photo_action'),
+            'contractNonce' => wp_create_nonce('shipping_contract_action'),
         ));
 
         $appearance = Shipping_Settings::get_appearance();

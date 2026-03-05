@@ -1,8 +1,8 @@
 <?php if (!defined('ABSPATH')) exit;
 $sub = $_GET['sub'] ?? 'live-tracking';
 ?>
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-    <div class="shipping-tabs-wrapper" style="display: flex; gap: 10px; border-bottom: 2px solid #eee; overflow-x: auto; white-space: nowrap; padding-bottom: 10px; margin-bottom: 0;">
+<div class="shipping-admin-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+    <div class="shipping-tabs-wrapper" style="display: flex; gap: 10px; border-bottom: none; overflow-x: auto; white-space: nowrap; padding-bottom: 10px; margin-bottom: 0; margin-top: 0;">
         <button class="shipping-tab-btn <?php echo $sub == 'live-tracking' ? 'shipping-active' : ''; ?>" onclick="shippingOpenInternalTab('logistic-live', this)">تتبع مباشر</button>
         <button class="shipping-tab-btn <?php echo $sub == 'routes' ? 'shipping-active' : ''; ?>" onclick="shippingOpenInternalTab('logistic-routes', this)">مسارات الشحن</button>
         <button class="shipping-tab-btn <?php echo $sub == 'stop-points' ? 'shipping-active' : ''; ?>" onclick="shippingOpenInternalTab('logistic-stops', this)">نقاط التوقف</button>
@@ -10,6 +10,25 @@ $sub = $_GET['sub'] ?? 'live-tracking';
         <button class="shipping-tab-btn <?php echo $sub == 'fleet' ? 'shipping-active' : ''; ?>" onclick="shippingOpenInternalTab('logistic-fleet', this)">الأسطول</button>
         <button class="shipping-tab-btn <?php echo $sub == 'analytics' ? 'shipping-active' : ''; ?>" onclick="shippingOpenInternalTab('logistic-analytics', this)">التحليلات والتقارير</button>
     </div>
+</div>
+
+<!-- Professional Search Engine for Logistics (contextual) -->
+<div class="shipping-search-engine-block" id="logistics-search-block" style="display: none;">
+    <form id="logistics-advanced-search" style="display: grid; grid-template-columns: 2fr 1fr auto; gap: 15px; align-items: end;">
+        <div class="shipping-form-group" style="margin-bottom:0;">
+            <label id="logistics-search-label" style="font-size: 12px; font-weight: 700; color: #64748b;">بحث شامل:</label>
+            <input type="text" id="logistics-search-query" class="shipping-input" placeholder="أدخل بيانات البحث..." oninput="LogisticsController.filterLogistics()">
+        </div>
+        <div class="shipping-form-group" style="margin-bottom:0;">
+            <label style="font-size: 12px; font-weight: 700; color: #64748b;">ترتيب حسب:</label>
+            <select id="logistics-sort-order" class="shipping-select" onchange="LogisticsController.filterLogistics()">
+                <option value="newest">الأحدث أولاً</option>
+                <option value="oldest">الأقدم أولاً</option>
+                <option value="name_asc">الاسم (أ-ي)</option>
+            </select>
+        </div>
+        <button type="button" onclick="LogisticsController.resetFilters()" class="shipping-btn shipping-btn-outline" style="height: 45px; width: auto;">إعادة ضبط</button>
+    </form>
 </div>
 
 <div id="logistic-live" class="shipping-internal-tab" style="display: <?php echo $sub == 'live-tracking' ? 'block' : 'none'; ?>;">
