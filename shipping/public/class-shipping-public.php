@@ -121,6 +121,19 @@ class Shipping_Public {
         wp_add_inline_style($this->plugin_name, $custom_css);
     }
 
+    public function custom_login_redirect($redirect_to, $request, $user) {
+        if (isset($user->roles) && is_array($user->roles)) {
+            if (in_array('administrator', $user->roles) || current_user_can('shipping_manage_advanced')) {
+                return home_url('/shipping-admin?shipping_tab=summary');
+            } elseif (current_user_can('shipping_manage_shipments')) {
+                return home_url('/shipping-admin?shipping_tab=shipment-mgmt');
+            } else {
+                return home_url('/shipping-admin?shipping_tab=my-profile');
+            }
+        }
+        return $redirect_to;
+    }
+
     public function register_shortcodes() {
         // New Shortcodes
         add_shortcode('shipping_login', array($this, 'shortcode_login'));
@@ -362,21 +375,28 @@ class Shipping_Public {
 
                     <form name="loginform" id="shipping_login_form" action="<?php echo esc_url(site_url('wp-login.php', 'login_post')); ?>" method="post">
                         <div class="auth-input-group">
-                            <input type="text" name="log" id="user_login" class="auth-input" placeholder="اسم المستخدم" required>
-                            <span class="auth-tooltip">أدخل اسم المستخدم أو البريد الإلكتروني الخاص بك</span>
+                            <label class="auth-label" for="user_login">اسم المستخدم أو البريد</label>
+                            <input type="text" name="log" id="user_login" class="auth-input" placeholder="اسم المستخدم" required aria-required="true">
+                            <span class="dashicons dashicons-admin-users"></span>
                         </div>
                         <div class="auth-input-group">
-                            <input type="password" name="pwd" id="user_pass" class="auth-input" placeholder="كلمة المرور" required>
-                            <span class="auth-tooltip">أدخل كلمة المرور السرية الخاصة بحسابك</span>
+                            <label class="auth-label" for="user_pass">كلمة المرور</label>
+                            <input type="password" name="pwd" id="user_pass" class="auth-input" placeholder="كلمة المرور" required aria-required="true">
+                            <span class="dashicons dashicons-lock"></span>
                         </div>
                         <div class="auth-options">
                             <label><input name="rememberme" type="checkbox" id="rememberme" value="forever"> تذكرني</label>
                             <a href="javascript:void(0)" onclick="shippingToggleRecovery()">نسيت كلمة المرور؟</a>
                         </div>
                         <button type="submit" name="wp-submit" id="wp-submit" class="auth-btn">
-                            <span class="dashicons dashicons-lock"></span> دخول النظام
+                            <span class="dashicons dashicons-lock"></span> دخول النظام الموحد
                         </button>
-                        <input type="hidden" name="redirect_to" value="<?php echo home_url('/shipping-admin'); ?>">
+                        <?php
+                        $redirect = home_url('/shipping-admin');
+                        // Custom redirect logic if needed per role is usually handled by a filter,
+                        // but we can set a default here.
+                        ?>
+                        <input type="hidden" name="redirect_to" value="<?php echo esc_url($redirect); ?>">
                     </form>
                 </div>
 
@@ -396,65 +416,79 @@ class Shipping_Public {
                         <div class="reg-stage active" id="reg-stage-1">
                             <div class="auth-row">
                                 <div class="auth-input-group">
-                                    <input type="text" id="reg_first_name" class="auth-input" placeholder="الاسم الأول" required>
+                                    <label class="auth-label" for="reg_first_name">الاسم الأول</label>
+                                    <input type="text" id="reg_first_name" class="auth-input" placeholder="مثال: أحمد" aria-required="true">
                                     <span class="dashicons dashicons-id-alt"></span>
-                                    <span class="auth-tooltip">أهلاً بك! يرجى إدخال اسمك الشخصي الأول</span>
+                                    <div id="first-name-validation-msg" class="validation-msg"></div>
                                 </div>
                                 <div class="auth-input-group">
-                                    <input type="text" id="reg_last_name" class="auth-input" placeholder="اسم العائلة" required>
+                                    <label class="auth-label" for="reg_last_name">اسم العائلة</label>
+                                    <input type="text" id="reg_last_name" class="auth-input" placeholder="مثال: الغامدي" aria-required="true">
                                     <span class="dashicons dashicons-groups"></span>
-                                    <span class="auth-tooltip">يرجى إدخال اسم العائلة أو اللقب الكريم</span>
+                                    <div id="last-name-validation-msg" class="validation-msg"></div>
                                 </div>
                             </div>
                             <div class="auth-row">
                                 <div class="auth-input-group">
+                                    <label class="auth-label" for="reg_gender">الجنس</label>
                                     <select id="reg_gender" class="auth-input">
                                         <option value="male">ذكر</option>
                                         <option value="female">أنثى</option>
                                     </select>
                                     <span class="dashicons dashicons-universal-access"></span>
-                                    <span class="auth-tooltip">يسعدنا تحديد الجنس لتخصيص تجربتك</span>
                                 </div>
                                 <div class="auth-input-group">
-                                    <input type="number" id="reg_yob" class="auth-input" placeholder="سنة الميلاد" min="1900" max="<?php echo date('Y'); ?>" required>
+                                    <label class="auth-label" for="reg_yob">سنة الميلاد</label>
+                                    <input type="number" id="reg_yob" class="auth-input" placeholder="مثال: 1995" min="1900" max="<?php echo date('Y'); ?>" aria-required="true">
                                     <span class="dashicons dashicons-calendar-alt"></span>
-                                    <span class="auth-tooltip">يرجى إدخال سنة ميلادك (مثلاً: 1990)</span>
+                                    <div id="yob-validation-msg" class="validation-msg"></div>
                                 </div>
                             </div>
-                            <button class="auth-btn" onclick="nextRegStage(1)">متابعة <span class="dashicons dashicons-arrow-left-alt"></span></button>
+                            <div class="auth-row">
+                                <div class="auth-input-group">
+                                    <label class="auth-label" for="reg_phone">رقم الجوال</label>
+                                    <input type="tel" id="reg_phone" class="auth-input" placeholder="05xxxxxxxx" aria-required="true">
+                                    <span class="dashicons dashicons-phone"></span>
+                                    <div id="phone-validation-msg" class="validation-msg"></div>
+                                </div>
+                            </div>
+                            <button class="auth-btn" onclick="nextRegStage(1)">متابعة الخطوة التالية <span class="dashicons dashicons-arrow-left-alt"></span></button>
                         </div>
 
                         <!-- Registration Stage 2 -->
                         <div class="reg-stage" id="reg-stage-2">
                             <div class="auth-row">
                                 <div class="auth-input-group">
-                                    <input type="email" id="reg_email" class="auth-input" placeholder="البريد الإلكتروني" oninput="debounceValidation('email')" required>
+                                    <label class="auth-label" for="reg_email">البريد الإلكتروني</label>
+                                    <input type="email" id="reg_email" class="auth-input" placeholder="example@domain.com" aria-required="true">
                                     <span class="dashicons dashicons-email"></span>
-                                    <span class="auth-tooltip">أدخل بريدك الإلكتروني لاستلام رمز التحقق الآمن</span>
                                     <div id="email-validation-msg" class="validation-msg"></div>
                                 </div>
                                 <div class="auth-input-group">
-                                    <input type="text" id="reg_username" class="auth-input" placeholder="اسم المستخدم" oninput="debounceValidation('username')" required>
+                                    <label class="auth-label" for="reg_username">اسم المستخدم</label>
+                                    <input type="text" id="reg_username" class="auth-input" placeholder="مثال: ahmad99" aria-required="true">
                                     <span class="dashicons dashicons-admin-users"></span>
-                                    <span class="auth-tooltip">اختر اسماً فريداً يميزك عند الدخول للنظام</span>
                                     <div id="username-validation-msg" class="validation-msg"></div>
                                 </div>
                             </div>
                             <div class="auth-row">
                                 <div class="auth-input-group">
-                                    <input type="password" id="reg_password" class="auth-input" placeholder="كلمة المرور" required>
+                                    <label class="auth-label" for="reg_password">كلمة المرور</label>
+                                    <input type="password" id="reg_password" class="auth-input" placeholder="********" aria-required="true">
                                     <span class="dashicons dashicons-lock"></span>
-                                    <span class="auth-tooltip">يرجى اختيار كلمة مرور قوية (8 أحرف على الأقل)</span>
+                                    <div id="password-strength-meter" class="strength-meter"></div>
+                                    <div id="password-validation-msg" class="validation-msg"></div>
                                 </div>
                                 <div class="auth-input-group">
-                                    <input type="password" id="reg_password_confirm" class="auth-input" placeholder="تأكيد كلمة المرور" required>
+                                    <label class="auth-label" for="reg_password_confirm">تأكيد كلمة المرور</label>
+                                    <input type="password" id="reg_password_confirm" class="auth-input" placeholder="********" aria-required="true">
                                     <span class="dashicons dashicons-yes-alt"></span>
-                                    <span class="auth-tooltip">يرجى إعادة كتابة كلمة المرور للتأكيد</span>
+                                    <div id="confirm-password-validation-msg" class="validation-msg"></div>
                                 </div>
                             </div>
                             <div class="auth-nav">
-                                <button class="auth-btn-link" onclick="prevRegStage(2)">السابق</button>
-                                <button class="auth-btn" id="btn-reg-stage-2" onclick="nextRegStage(2)">إرسال رمز التحقق</button>
+                                <button class="auth-btn-link" onclick="prevRegStage(2)">الرجوع للسابق</button>
+                                <button class="auth-btn" id="btn-reg-stage-2" onclick="nextRegStage(2)">إرسال رمز التحقق (OTP)</button>
                             </div>
                         </div>
 
@@ -487,101 +521,47 @@ class Shipping_Public {
             <!-- Recovery Modal -->
             <div id="shipping-recovery-modal" class="auth-modal">
                 <div class="auth-modal-content" dir="rtl">
-                    <button class="modal-close" onclick="shippingToggleRecovery()">&times;</button>
-                    <h3 style="margin-top:0; margin-bottom:25px; text-align:center; font-weight:800;">استعادة كلمة المرور</h3>
+                    <button type="button" class="modal-close" onclick="shippingToggleRecovery()">&times;</button>
+                    <h3 style="margin-top:0; margin-bottom:25px; text-align:center; font-weight:900; color:var(--shipping-dark-color);">استعادة الوصول للحساب</h3>
                     <div id="recovery-step-1">
-                        <p style="font-size:14px; color:#64748b; margin-bottom:20px; line-height:1.6;">أدخل اسم المستخدم الخاص بك للتحقق وإرسال رمز الاستعادة.</p>
+                        <p style="font-size:14px; color:#64748b; margin-bottom:20px; line-height:1.6;">أدخل اسم المستخدم المرتبط بحسابك لتلقي رمز التحقق عبر البريد الإلكتروني.</p>
                         <div class="auth-input-group">
-                            <input type="text" id="rec_username" class="auth-input" placeholder="اسم المستخدم">
+                            <label class="auth-label" for="rec_username">اسم المستخدم</label>
+                            <input type="text" id="rec_username" class="auth-input" placeholder="مثال: ahmad99">
+                            <span class="dashicons dashicons-admin-users"></span>
                         </div>
-                        <button onclick="shippingRequestOTP()" class="auth-btn">إرسال رمز التحقق</button>
+                        <button type="button" onclick="shippingRequestOTP()" id="btn-request-otp" class="auth-btn" style="margin-top:15px;">تأكيد وإرسال الرمز</button>
                     </div>
                     <div id="recovery-step-2" style="display:none;">
-                        <p style="font-size:13px; color:#38a169; margin-bottom:15px;">تم إرسال الرمز بنجاح. يرجى التحقق من بريدك.</p>
-                        <div class="auth-input-group">
-                            <input type="text" id="rec_otp" class="auth-input" placeholder="الرمز (6 أرقام)">
+                        <div style="background:#f0fff4; border:1px solid #c6f6d5; padding:15px; border-radius:12px; margin-bottom:20px; color:#22543d; font-size:13px;">
+                            تم إرسال الرمز بنجاح إلى بريدك الإلكتروني. يرجى إدخاله للمتابعة.
                         </div>
                         <div class="auth-input-group">
-                            <input type="password" id="rec_new_pass" class="auth-input" placeholder="كلمة المرور الجديدة">
+                            <label class="auth-label" for="rec_otp">رمز التحقق (OTP)</label>
+                            <input type="text" id="rec_otp" class="auth-input otp-input" placeholder="000000" maxlength="6">
+                            <span class="dashicons dashicons-shield"></span>
                         </div>
-                        <button onclick="shippingResetPassword()" class="auth-btn">تغيير كلمة المرور</button>
+                        <div class="auth-input-group">
+                            <label class="auth-label" for="rec_new_pass">كلمة المرور الجديدة</label>
+                            <input type="password" id="rec_new_pass" class="auth-input" placeholder="********">
+                            <span class="dashicons dashicons-lock"></span>
+                        </div>
+                        <button type="button" onclick="shippingResetPassword()" id="btn-reset-pass" class="auth-btn" style="margin-top:15px;">تحديث كلمة المرور والدخول</button>
                     </div>
                 </div>
             </div>
         </div>
 
+        <!-- Clean, modern login/registration CSS is loaded from shipping-public.css -->
         <style>
-            .shipping-auth-wrapper {
-                display: flex; justify-content: center; align-items: center; min-height: 80vh; padding: 20px;
-                background: #f8fafc; font-family: 'Rubik', sans-serif;
-            }
-            .shipping-auth-container {
-                width: 100%; max-width: 500px; background: #fff; border-radius: 24px;
-                box-shadow: 0 20px 40px rgba(0,0,0,0.05); overflow: hidden; border: 1px solid #f1f5f9;
-            }
-            .shipping-auth-header {
-                padding: 40px 30px 20px; text-align: center; background: var(--shipping-dark-color); color: #fff;
-            }
-            .auth-logo { max-height: 60px; margin-bottom: 15px; }
-            .shipping-auth-header h2 { margin: 0; font-size: 1.6em; font-weight: 900; }
-            .shipping-auth-header p { margin: 5px 0 0; opacity: 0.8; font-size: 0.9em; }
-
-            .auth-welcome-msg { text-align: center; color: #64748b; margin-bottom: 25px; font-size: 0.95em; line-height: 1.5; }
-
-            .shipping-auth-tabs { display: flex; border-bottom: 1px solid #f1f5f9; }
-            .auth-tab {
-                flex: 1; padding: 15px; border: none; background: #fdfdfd; cursor: pointer;
-                font-weight: 700; color: #64748b; transition: 0.3s; font-family: 'Rubik', sans-serif;
-            }
-            .auth-tab.active { background: #fff; color: var(--shipping-primary-color); border-bottom: 3px solid var(--shipping-primary-color); }
-
-            .auth-section { display: none; padding: 30px; animation: authFadeIn 0.4s ease; }
-            .auth-section.active { display: block; }
-
-            .auth-alert { padding: 12px; border-radius: 10px; margin-bottom: 20px; font-size: 0.85em; text-align: center; font-weight: 600; }
-            .auth-alert.error { background: #fff5f5; color: #c53030; border: 1px solid #feb2b2; }
-
-            .auth-row { display: flex; gap: 15px; margin-bottom: 15px; }
-            .auth-input-group { position: relative; flex: 1; }
-            .auth-input {
-                width: 100%; padding: 14px 18px 14px 45px; border: 2px solid #f1f5f9; border-radius: 12px;
-                font-size: 0.95em; outline: none; transition: 0.3s; font-family: 'Rubik', sans-serif;
-                background: #fcfcfc;
-            }
             .auth-input-group .dashicons {
-                position: absolute; left: 15px; top: 50%; transform: translateY(-50%);
-                color: #94a3b8; font-size: 18px; transition: 0.3s; pointer-events: none;
+                top: calc(50% + 10px);
             }
-            .auth-input:focus + .dashicons + .auth-tooltip, .auth-input:focus + .dashicons { color: var(--shipping-primary-color); }
-            .auth-input:focus { border-color: var(--shipping-primary-color); background: #fff; }
+            .reg-progress-bar { display: flex; gap: 8px; margin-bottom: 25px; }
+            .progress-step { flex: 1; height: 6px; background: #f1f5f9; border-radius: 10px; transition: 0.4s; }
+            .progress-step.active { background: var(--shipping-primary-color); }
+            .progress-step.complete { background: #10b981; }
 
-            .auth-tooltip {
-                position: absolute; bottom: 100%; right: 0; background: #334155; color: #fff;
-                padding: 5px 10px; border-radius: 6px; font-size: 0.75em; visibility: hidden;
-                opacity: 0; transition: 0.3s; transform: translateY(5px); pointer-events: none; z-index: 10;
-                white-space: nowrap;
-            }
-            .auth-input-group:hover .auth-tooltip, .auth-input-group:focus-within .auth-tooltip { visibility: visible; opacity: 1; transform: translateY(-5px); }
-
-            .auth-options { display: flex; justify-content: space-between; align-items: center; margin: -5px 0 20px; font-size: 0.85em; }
-            .auth-options label { color: #64748b; display: flex; align-items: center; gap: 6px; }
-            .auth-options a { color: var(--shipping-primary-color); text-decoration: none; font-weight: 600; }
-
-            .auth-btn {
-                width: 100%; padding: 15px; background: var(--shipping-primary-color); color: #fff;
-                border: none; border-radius: 12px; font-weight: 700; cursor: pointer; transition: 0.3s;
-                font-size: 1.05em; font-family: 'Rubik', sans-serif;
-                display: flex; align-items: center; justify-content: center; gap: 10px;
-            }
-            .auth-btn:hover { opacity: 0.9; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-
-            .reg-stage { display: none; animation: authSlideIn 0.3s ease; }
-            .reg-stage.active { display: block; }
-
-            .auth-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; }
-            .auth-btn-link { background: none; border: none; color: #64748b; font-weight: 600; cursor: pointer; text-decoration: underline; font-family: 'Rubik', sans-serif; }
-
-            .otp-input { text-align: center; letter-spacing: 10px; font-size: 1.5em; font-weight: 900; }
             .auth-photo-upload {
                 width: 100px; height: 100px; background: #f8fafc; border: 2px dashed #cbd5e0;
                 border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center;
@@ -597,21 +577,22 @@ class Shipping_Public {
             .auth-modal-content { background: #fff; padding: 40px; border-radius: 24px; width: 90%; max-width: 420px; position: relative; }
             .modal-close { position: absolute; top: 20px; left: 20px; border: none; background: none; font-size: 24px; cursor: pointer; color: #94a3b8; }
 
-            .validation-msg { font-size: 0.8em; margin-top: 4px; }
-            .validation-msg.error { color: #ef4444; }
-            .validation-msg.success { color: #10b981; }
+            .auth-welcome-msg { text-align: center; color: #64748b; margin-bottom: 30px; font-size: 15px; line-height: 1.6; }
+            .auth-alert { padding: 12px; border-radius: 10px; margin-bottom: 20px; font-size: 0.85em; text-align: center; font-weight: 600; }
+            .auth-alert.error { background: #fff5f5; color: #c53030; border: 1px solid #feb2b2; }
+            .auth-row { display: flex; gap: 15px; margin-bottom: 15px; }
+
+            .reg-stage { display: none; animation: authSlideIn 0.3s ease; }
+            .reg-stage.active { display: block; }
+            .auth-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; }
+            .auth-btn-link { background: none; border: none; color: #64748b; font-weight: 600; cursor: pointer; text-decoration: underline; font-family: 'Rubik', sans-serif; }
+            .otp-input { text-align: center; letter-spacing: 10px; font-size: 1.5em; font-weight: 900; }
 
             @keyframes authFadeIn { from { opacity: 0; } to { opacity: 1; } }
             @keyframes authSlideIn { from { transform: translateX(20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 
-            .reg-progress-bar { display: flex; gap: 8px; margin-bottom: 25px; }
-            .progress-step { flex: 1; height: 6px; background: #f1f5f9; border-radius: 10px; transition: 0.4s; }
-            .progress-step.active { background: var(--shipping-primary-color); }
-            .progress-step.complete { background: #10b981; }
-
             @media (max-width: 480px) {
                 .auth-row { flex-direction: column; gap: 10px; }
-                .auth-tooltip { display: none; } /* Hide tooltips on mobile for better UX */
             }
         </style>
 
@@ -634,6 +615,59 @@ class Shipping_Public {
             if (urlParams.get('auth') === 'register') {
                 switchAuthTab('register');
             }
+
+            // Real-time listeners
+            document.getElementById('reg_first_name')?.addEventListener('input', (e) => {
+                if (e.target.value.length > 0) showValMsg('first-name', '', '');
+            });
+            document.getElementById('reg_last_name')?.addEventListener('input', (e) => {
+                if (e.target.value.length > 0) showValMsg('last-name', '', '');
+            });
+            document.getElementById('reg_phone')?.addEventListener('input', (e) => {
+                const val = e.target.value;
+                if (!val) showValMsg('phone', '', '');
+                else if (!/^05\d{8}$/.test(val)) showValMsg('phone', 'يجب أن يبدأ بـ 05 ويتكون من 10 أرقام', 'error');
+                else showValMsg('phone', 'رقم جوال صحيح', 'success');
+            });
+
+            document.getElementById('reg_email')?.addEventListener('input', () => debounceValidation('email'));
+            document.getElementById('reg_username')?.addEventListener('input', () => debounceValidation('username'));
+
+            document.getElementById('reg_password')?.addEventListener('input', (e) => {
+                const pass = e.target.value;
+                const meter = document.getElementById('password-strength-meter');
+                if (pass) {
+                    meter.style.display = 'block';
+                    let strength = 0;
+                    if (pass.length >= 8) strength++;
+                    if (/[A-Z]/.test(pass)) strength++;
+                    if (/[0-9]/.test(pass)) strength++;
+                    if (/[^A-Za-z0-9]/.test(pass)) strength++;
+
+                    let color = '#ef4444';
+                    let width = '25%';
+                    let msg = 'ضعيفة جداً';
+
+                    if (strength === 2) { color = '#f59e0b'; width = '50%'; msg = 'متوسطة'; }
+                    else if (strength === 3) { color = '#3b82f6'; width = '75%'; msg = 'قوية'; }
+                    else if (strength === 4) { color = '#10b981'; width = '100%'; msg = 'قوية جداً'; }
+
+                    meter.innerHTML = `<div class="strength-meter-fill" style="width:${width}; background:${color};"></div>`;
+                    showValMsg('password', msg, strength >= 3 ? 'success' : 'error');
+                } else {
+                    meter.style.display = 'none';
+                    showValMsg('password', '', '');
+                }
+            });
+
+            document.getElementById('reg_password_confirm')?.addEventListener('input', (e) => {
+                const pass = document.getElementById('reg_password').value;
+                const confirm = e.target.value;
+                if (confirm) {
+                    if (pass === confirm) showValMsg('confirm-password', 'كلمات المرور متطابقة', 'success');
+                    else showValMsg('confirm-password', 'كلمات المرور غير متطابقة', 'error');
+                } else showValMsg('confirm-password', '', '');
+            });
         });
 
         function nextRegStage(stage) {
@@ -642,7 +676,16 @@ class Shipping_Public {
                 regData.last_name = document.getElementById('reg_last_name').value;
                 regData.gender = document.getElementById('reg_gender').value;
                 regData.year_of_birth = document.getElementById('reg_yob').value;
-                if (!regData.first_name || !regData.last_name || !regData.year_of_birth) return alert('يرجى إكمال جميع الحقول');
+                regData.phone = document.getElementById('reg_phone').value;
+
+                let valid = true;
+                if (!regData.first_name) { showValMsg('first-name', 'الاسم الأول مطلوب', 'error'); valid = false; }
+                if (!regData.last_name) { showValMsg('last-name', 'اسم العائلة مطلوب', 'error'); valid = false; }
+                if (!regData.year_of_birth) { showValMsg('yob', 'سنة الميلاد مطلوبة', 'error'); valid = false; }
+                if (!regData.phone) { showValMsg('phone', 'رقم الجوال مطلوب', 'error'); valid = false; }
+                else if (!/^05\d{8}$/.test(regData.phone)) { showValMsg('phone', 'صيغة رقم الجوال غير صحيحة (05xxxxxxxx)', 'error'); valid = false; }
+
+                if (!valid) return;
             } else if (stage === 2) {
                 regData.email = document.getElementById('reg_email').value;
                 regData.username = document.getElementById('reg_username').value;
@@ -669,6 +712,15 @@ class Shipping_Public {
                 if (idx + 1 < stage) el.classList.add('complete');
                 else if (idx + 1 === stage) el.classList.add('active');
             });
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function showValMsg(id, msg, type) {
+            const el = document.getElementById(id + '-validation-msg');
+            if (el) {
+                el.innerText = msg;
+                el.className = 'validation-msg ' + type;
+            }
         }
 
         let valTimeout;
@@ -677,17 +729,20 @@ class Shipping_Public {
             valTimeout = setTimeout(() => {
                 const val = document.getElementById('reg_' + type).value;
                 if (!val) return;
+
+                if (type === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) {
+                    showValMsg('email', 'صيغة البريد الإلكتروني غير صحيحة', 'error');
+                    return;
+                }
+
                 const fd = new FormData();
                 fd.append('action', 'shipping_check_username_email');
                 if (type === 'username') fd.append('username', val); else fd.append('email', val);
                 fetch(ajaxurl, {method:'POST', body:fd}).then(r=>r.json()).then(res=>{
-                    const msgEl = document.getElementById(type + '-validation-msg');
                     if (res.success) {
-                        msgEl.innerText = type === 'username' ? 'متاح' : 'بريد متاح';
-                        msgEl.className = 'validation-msg success';
+                        showValMsg(type, type === 'username' ? 'اسم المستخدم متاح' : 'البريد الإلكتروني متاح', 'success');
                     } else {
-                        msgEl.innerText = res.data.message;
-                        msgEl.className = 'validation-msg error';
+                        showValMsg(type, res.data.message, 'error');
                     }
                 });
             }, 500);
@@ -724,8 +779,11 @@ class Shipping_Public {
             const btn = document.querySelector('#reg-stage-4 .auth-btn');
             btn.disabled = true; btn.innerText = 'جاري المعالجة...';
             const fd = new FormData();
-            for (const k in regData) fd.append(k, regData[k]);
+            for (const k in regData) {
+                if (regData[k]) fd.append(k, regData[k]);
+            }
             fd.append('action', 'shipping_register_complete');
+            fd.append('nonce', shippingVars.publicNonce);
             const photo = document.getElementById('reg_photo').files[0];
             if (photo) fd.append('profile_image', photo);
             fetch(ajaxurl, {method:'POST', body:fd}).then(r=>r.json()).then(res=>{
@@ -740,8 +798,12 @@ class Shipping_Public {
         }
         function shippingRequestOTP() {
             const username = document.getElementById("rec_username").value;
+            if (!username) return alert('يرجى إدخال اسم المستخدم');
+            const btn = document.getElementById("btn-request-otp");
+            btn.disabled = true; btn.innerText = "جاري الإرسال...";
             const fd = new FormData(); fd.append("action", "shipping_forgot_password_otp"); fd.append("username", username);
             fetch(ajaxurl, {method:"POST", body:fd}).then(r=>r.json()).then(res=>{
+                btn.disabled = false; btn.innerText = "تأكيد وإرسال الرمز";
                 if(res.success) { document.getElementById("recovery-step-1").style.display="none"; document.getElementById("recovery-step-2").style.display="block"; } else alert(res.data);
             });
         }
@@ -749,9 +811,13 @@ class Shipping_Public {
             const username = document.getElementById("rec_username").value;
             const otp = document.getElementById("rec_otp").value;
             const pass = document.getElementById("rec_new_pass").value;
+            if (!otp || !pass) return alert('يرجى إكمال جميع الحقول');
+            const btn = document.getElementById("btn-reset-pass");
+            btn.disabled = true; btn.innerText = "جاري التحديث...";
             const fd = new FormData(); fd.append("action", "shipping_reset_password_otp");
             fd.append("username", username); fd.append("otp", otp); fd.append("new_password", pass);
             fetch(ajaxurl, {method:"POST", body:fd}).then(r=>r.json()).then(res=>{
+                btn.disabled = false; btn.innerText = "تحديث كلمة المرور والدخول";
                 if(res.success) { alert(res.data); location.reload(); } else alert(res.data);
             });
         }
@@ -1102,12 +1168,14 @@ class Shipping_Public {
 
     public function ajax_get_alerts() {
         if (!is_user_logged_in()) wp_send_json_error('Unauthorized');
+        check_ajax_referer('shipping_admin_action', 'nonce');
         $alerts = Shipping_DB::get_active_alerts_for_user(get_current_user_id());
         wp_send_json_success($alerts);
     }
 
     public function ajax_acknowledge_alert() {
         if (!is_user_logged_in()) wp_send_json_error('Unauthorized');
+        check_ajax_referer('shipping_admin_action', 'nonce');
         $id = intval($_POST['id']);
         Shipping_DB::acknowledge_alert($id, get_current_user_id());
         wp_send_json_success();
@@ -1713,6 +1781,7 @@ class Shipping_Public {
     }
 
     public function ajax_register_complete() {
+        check_ajax_referer('shipping_public_action', 'nonce');
         $data = $_POST;
         $email = sanitize_email($data['email'] ?? '');
 
@@ -1749,6 +1818,7 @@ class Shipping_Public {
             'gender' => sanitize_text_field($data['gender']),
             'year_of_birth' => intval($data['year_of_birth']),
             'email' => $email,
+            'phone' => sanitize_text_field($data['phone'] ?? ''),
             'wp_user_id' => $user_id,
             'account_status' => 'active'
         ];

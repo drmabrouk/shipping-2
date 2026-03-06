@@ -525,10 +525,22 @@ class Shipping_Activator {
 
     private static function add_db_indexes() {
         global $wpdb;
-        $wpdb->query("ALTER TABLE {$wpdb->prefix}shipping_shipments ADD INDEX idx_ship_num (shipment_number)");
-        $wpdb->query("ALTER TABLE {$wpdb->prefix}shipping_customers ADD INDEX idx_cust_user (username)");
-        $wpdb->query("ALTER TABLE {$wpdb->prefix}shipping_orders ADD INDEX idx_ord_num (order_number)");
-        $wpdb->query("ALTER TABLE {$wpdb->prefix}shipping_invoices ADD INDEX idx_inv_num (invoice_number)");
+
+        $indices = [
+            "{$wpdb->prefix}shipping_shipments" => ['idx_ship_num' => 'shipment_number'],
+            "{$wpdb->prefix}shipping_customers" => ['idx_cust_user' => 'username'],
+            "{$wpdb->prefix}shipping_orders"    => ['idx_ord_num' => 'order_number'],
+            "{$wpdb->prefix}shipping_invoices"  => ['idx_inv_num' => 'invoice_number']
+        ];
+
+        foreach ($indices as $table => $index_data) {
+            foreach ($index_data as $index_name => $column) {
+                $exists = $wpdb->get_results("SHOW INDEX FROM $table WHERE Key_name = '$index_name'");
+                if (empty($exists)) {
+                    $wpdb->query("ALTER TABLE $table ADD INDEX $index_name ($column)");
+                }
+            }
+        }
     }
 
     private static function seed_sample_data() {
