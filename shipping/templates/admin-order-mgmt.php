@@ -9,9 +9,15 @@ $sub = $_GET['sub'] ?? 'new-orders';
         <button class="shipping-tab-btn <?php echo $sub == 'completed' ? 'shipping-active' : ''; ?>" onclick="shippingOpenInternalTab('order-completed', this); OrdersController.loadOrders('completed')">مكتملة</button>
         <button class="shipping-tab-btn <?php echo $sub == 'cancelled' ? 'shipping-active' : ''; ?>" onclick="shippingOpenInternalTab('order-cancelled', this); OrdersController.loadOrders('cancelled')">ملغاة</button>
     </div>
+    <?php if (current_user_can('subscriber')): ?>
     <div style="display: flex; gap: 10px;">
-        <button class="shipping-btn" onclick="OrdersController.openAddModal()">+ طلب جديد</button>
+        <button class="shipping-btn" onclick="OrdersController.openAddModal()">+ إنشاء طلب شحن جديد</button>
     </div>
+    <?php elseif (current_user_can('manage_options')): ?>
+    <div style="display: flex; gap: 10px;">
+        <button class="shipping-btn" onclick="OrdersController.openAddModal()">+ إضافة طلب إداري</button>
+    </div>
+    <?php endif; ?>
 </div>
 
 <!-- Professional Search Engine for Orders -->
@@ -90,11 +96,18 @@ foreach($statuses as $status => $id): ?>
                     <div class="shipping-form-group">
                         <label>العميل</label>
                         <select name="customer_id" class="shipping-input" required>
-                            <option value="">اختر العميل...</option>
-                            <?php
-                            $customers = $wpdb->get_results("SELECT id, CONCAT(first_name, ' ', last_name) as name FROM {$wpdb->prefix}shipping_customers ORDER BY first_name ASC");
-                            foreach($customers as $c) echo "<option value='{$c->id}'>".esc_html($c->name)."</option>";
+                            <?php if (current_user_can('subscriber')):
+                                $cust_id = $wpdb->get_var($wpdb->prepare("SELECT id FROM {$wpdb->prefix}shipping_customers WHERE wp_user_id = %d", get_current_user_id()));
+                                $cust_name = $wpdb->get_var($wpdb->prepare("SELECT CONCAT(first_name, ' ', last_name) FROM {$wpdb->prefix}shipping_customers WHERE id = %d", $cust_id));
                             ?>
+                                <option value="<?php echo $cust_id; ?>"><?php echo esc_html($cust_name); ?></option>
+                            <?php else: ?>
+                                <option value="">اختر العميل...</option>
+                                <?php
+                                $customers = $wpdb->get_results("SELECT id, CONCAT(first_name, ' ', last_name) as name FROM {$wpdb->prefix}shipping_customers ORDER BY first_name ASC");
+                                foreach($customers as $c) echo "<option value='{$c->id}'>".esc_html($c->name)."</option>";
+                                ?>
+                            <?php endif; ?>
                         </select>
                     </div>
                     <div class="shipping-form-group">

@@ -12,7 +12,14 @@ window.AdminController = {
     },
 
     initSidebarState() {
-        const isCollapsed = localStorage.getItem('shipping_sidebar_collapsed') === 'true';
+        // Preference: Server-side meta > LocalStorage
+        const dashboard = document.querySelector('.shipping-admin-dashboard');
+        let isCollapsed = dashboard ? dashboard.classList.contains('sidebar-collapsed-pref') : false;
+
+        if (!isCollapsed && localStorage.getItem('shipping_sidebar_collapsed')) {
+            isCollapsed = localStorage.getItem('shipping_sidebar_collapsed') === 'true';
+        }
+
         const sidebar = document.querySelector('.shipping-sidebar');
         if (sidebar) {
             sidebar.classList.toggle('collapsed', isCollapsed);
@@ -29,6 +36,13 @@ window.AdminController = {
 
         const isCollapsed = sidebar.classList.toggle('collapsed');
         localStorage.setItem('shipping_sidebar_collapsed', isCollapsed);
+
+        // Persistent save to server
+        const fd = new FormData();
+        fd.append('action', 'shipping_save_sidebar_state');
+        fd.append('collapsed', isCollapsed ? 1 : 0);
+        fd.append('nonce', shippingVars.nonce);
+        fetch(ajaxurl, { method: 'POST', body: fd });
 
         const toggleBtn = document.getElementById('shipping-sidebar-toggle');
         if (toggleBtn) {

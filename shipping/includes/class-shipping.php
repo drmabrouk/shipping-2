@@ -131,6 +131,7 @@ class Shipping {
         $this->loader->add_action('wp_ajax_shipping_clear_all_logs', $plugin_public, 'ajax_clear_all_logs');
         $this->loader->add_action('wp_ajax_shipping_get_alerts', $plugin_public, 'ajax_get_alerts');
         $this->loader->add_action('wp_ajax_shipping_acknowledge_alert', $plugin_public, 'ajax_acknowledge_alert');
+        $this->loader->add_action('wp_ajax_shipping_save_sidebar_state', $plugin_public, 'ajax_save_sidebar_state');
         $this->loader->add_action('wp_ajax_shipping_export_csv', $plugin_public, 'ajax_export_csv');
         $this->loader->add_action('wp_ajax_shipping_get_user_role', $plugin_public, 'ajax_get_user_role');
         $this->loader->add_action('wp_ajax_shipping_update_customer_account_ajax', $plugin_public, 'ajax_update_customer_account');

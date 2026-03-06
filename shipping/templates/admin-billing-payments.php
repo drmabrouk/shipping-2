@@ -4,13 +4,19 @@ $sub = $_GET['sub'] ?? 'invoice-gen';
 ?>
 <div class="shipping-admin-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
     <div class="shipping-tabs-wrapper" style="display: flex; gap: 10px; margin-bottom: 0; border-bottom: none; overflow-x: auto; white-space: nowrap; padding-bottom: 10px; margin-top: 0;">
-        <button class="shipping-tab-btn <?php echo $sub == 'invoice-gen' ? 'shipping-active' : ''; ?>" onclick="shippingOpenInternalTab('billing-invoice', this)">إصدار فواتير</button>
+        <?php if (!$is_restricted): ?>
+            <button class="shipping-tab-btn <?php echo $sub == 'invoice-gen' ? 'shipping-active' : ''; ?>" onclick="shippingOpenInternalTab('billing-invoice', this)">إصدار فواتير</button>
+        <?php endif; ?>
         <button class="shipping-tab-btn <?php echo $sub == 'records' ? 'shipping-active' : ''; ?>" onclick="shippingOpenInternalTab('billing-records', this)">سجلات الدفع</button>
         <button class="shipping-tab-btn <?php echo $sub == 'balances' ? 'shipping-active' : ''; ?>" onclick="shippingOpenInternalTab('billing-balances', this)">الأرصدة</button>
-        <button class="shipping-tab-btn <?php echo $sub == 'reports' ? 'shipping-active' : ''; ?>" onclick="shippingOpenInternalTab('billing-reports', this)">التقارير المالية</button>
+        <?php if (!$is_restricted): ?>
+            <button class="shipping-tab-btn <?php echo $sub == 'reports' ? 'shipping-active' : ''; ?>" onclick="shippingOpenInternalTab('billing-reports', this)">التقارير المالية</button>
+        <?php endif; ?>
         <button class="shipping-tab-btn <?php echo $sub == 'calculator' ? 'shipping-active' : ''; ?>" onclick="shippingOpenInternalTab('pricing-calc', this)">حاسبة التكلفة</button>
-        <button class="shipping-tab-btn <?php echo $sub == 'pricing-rules' ? 'shipping-active' : ''; ?>" onclick="shippingOpenInternalTab('pricing-rules', this)">قواعد التسعير</button>
-        <button class="shipping-tab-btn <?php echo $sub == 'extra-charges' ? 'shipping-active' : ''; ?>" onclick="shippingOpenInternalTab('pricing-extra', this)">رسوم إضافية</button>
+        <?php if (!$is_restricted): ?>
+            <button class="shipping-tab-btn <?php echo $sub == 'pricing-rules' ? 'shipping-active' : ''; ?>" onclick="shippingOpenInternalTab('pricing-rules', this)">قواعد التسعير</button>
+            <button class="shipping-tab-btn <?php echo $sub == 'extra-charges' ? 'shipping-active' : ''; ?>" onclick="shippingOpenInternalTab('pricing-extra', this)">رسوم إضافية</button>
+        <?php endif; ?>
     </div>
     <div style="display:flex; gap:10px;">
         <a href="<?php echo admin_url('admin-ajax.php?action=shipping_export_csv&type=invoices&nonce=' . wp_create_nonce('shipping_export_nonce')); ?>" class="shipping-btn" style="width:auto; background: #2f855a; text-decoration:none;">تصدير Invoices</a>
@@ -169,7 +175,13 @@ $sub = $_GET['sub'] ?? 'invoice-gen';
 <!-- 3. Receivables Tracking -->
 <div id="billing-balances" class="shipping-internal-tab" style="display: <?php echo $sub == 'balances' ? 'block' : 'none'; ?>;">
     <?php
+    $user = wp_get_current_user();
+    $is_restricted = in_array('subscriber', (array)$user->roles);
     $receivables = Shipping_DB::get_receivables();
+    if ($is_restricted) {
+        $cust_id = $wpdb->get_var($wpdb->prepare("SELECT id FROM {$wpdb->prefix}shipping_customers WHERE wp_user_id = %d", $user->ID));
+        $receivables = array_filter($receivables, function($r) use ($cust_id) { return $r->customer_id == $cust_id; });
+    }
     ?>
     <div class="shipping-card">
         <h4>الأرصدة المستحقة (الحسابات المدينة)</h4>

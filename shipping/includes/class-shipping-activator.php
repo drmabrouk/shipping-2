@@ -527,17 +527,21 @@ class Shipping_Activator {
         global $wpdb;
 
         $indices = [
-            "{$wpdb->prefix}shipping_shipments" => ['idx_ship_num' => 'shipment_number'],
-            "{$wpdb->prefix}shipping_customers" => ['idx_cust_user' => 'username'],
-            "{$wpdb->prefix}shipping_orders"    => ['idx_ord_num' => 'order_number'],
-            "{$wpdb->prefix}shipping_invoices"  => ['idx_inv_num' => 'invoice_number']
+            "{$wpdb->prefix}shipping_shipments" => ['idx_ship_num' => 'shipment_number', 'idx_ship_cust' => 'customer_id', 'idx_ship_stat' => 'status'],
+            "{$wpdb->prefix}shipping_customers" => ['idx_cust_user' => 'username', 'idx_cust_wp' => 'wp_user_id'],
+            "{$wpdb->prefix}shipping_orders"    => ['idx_ord_num' => 'order_number', 'idx_ord_cust' => 'customer_id'],
+            "{$wpdb->prefix}shipping_invoices"  => ['idx_inv_num' => 'invoice_number', 'idx_inv_cust' => 'customer_id'],
+            "{$wpdb->prefix}shipping_messages"  => ['idx_msg_cust' => 'customer_id', 'idx_msg_send' => 'sender_id', 'idx_msg_recv' => 'receiver_id']
         ];
 
         foreach ($indices as $table => $index_data) {
-            foreach ($index_data as $index_name => $column) {
-                $exists = $wpdb->get_results("SHOW INDEX FROM $table WHERE Key_name = '$index_name'");
-                if (empty($exists)) {
-                    $wpdb->query("ALTER TABLE $table ADD INDEX $index_name ($column)");
+            // Check if table exists before indexing
+            if ($wpdb->get_var("SHOW TABLES LIKE '$table'")) {
+                foreach ($index_data as $index_name => $column) {
+                    $exists = $wpdb->get_results("SHOW INDEX FROM $table WHERE Key_name = '$index_name'");
+                    if (empty($exists)) {
+                        $wpdb->query("ALTER TABLE $table ADD INDEX $index_name ($column)");
+                    }
                 }
             }
         }
@@ -920,8 +924,12 @@ class Shipping_Activator {
                 'title' => 'تسجيل الدخول للنظام',
                 'content' => '[shipping_login]'
             ),
-            'shipping-admin' => array(
+            'admin' => array(
                 'title' => 'لوحة الإدارة الشحن المحلي والدولي',
+                'content' => '[shipping_admin]'
+            ),
+            'account' => array(
+                'title' => 'حسابي',
                 'content' => '[shipping_admin]'
             ),
             'home' => array(

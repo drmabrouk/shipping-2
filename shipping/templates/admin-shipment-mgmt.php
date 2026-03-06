@@ -60,7 +60,15 @@ $sub = $_GET['sub'] ?? 'create-shipment';
                 </thead>
                 <tbody id="shipments-list-body">
                     <?php
-                    $all_shipments = $wpdb->get_results("SELECT s.*, CONCAT(c.first_name, ' ', c.last_name) as customer_name FROM {$wpdb->prefix}shipping_shipments s LEFT JOIN {$wpdb->prefix}shipping_customers c ON s.customer_id = c.id ORDER BY s.created_at DESC");
+                    $user = wp_get_current_user();
+                    $is_restricted = in_array('subscriber', (array)$user->roles);
+                    $query = "SELECT s.*, CONCAT(c.first_name, ' ', c.last_name) as customer_name FROM {$wpdb->prefix}shipping_shipments s LEFT JOIN {$wpdb->prefix}shipping_customers c ON s.customer_id = c.id";
+                    if ($is_restricted) {
+                        $cust_id = $wpdb->get_var($wpdb->prepare("SELECT id FROM {$wpdb->prefix}shipping_customers WHERE wp_user_id = %d", $user->ID));
+                        $query .= $wpdb->prepare(" WHERE s.customer_id = %d", $cust_id);
+                    }
+                    $query .= " ORDER BY s.created_at DESC";
+                    $all_shipments = $wpdb->get_results($query);
                     if(empty($all_shipments)): ?>
                         <tr><td colspan="7" style="text-align:center; padding:50px; color:#94a3b8;">لا توجد شحنات مسجلة حالياً في النظام.</td></tr>
                     <?php else: foreach($all_shipments as $s): ?>

@@ -28,7 +28,7 @@ $is_officer = current_user_can('shipping_manage_shipments');
 
 $active_tab = isset($_GET['shipping_tab']) ? sanitize_text_field($_GET['shipping_tab']) : 'summary';
 $is_restricted = $is_subscriber;
-if ($is_restricted && !in_array($active_tab, ['my-profile', 'customer-profile', 'messaging'])) {
+if ($is_restricted && !in_array($active_tab, ['my-profile', 'customer-profile', 'messaging', 'shipment-mgmt', 'order-mgmt', 'billing-payments'])) {
     $active_tab = 'my-profile';
 }
 
@@ -45,9 +45,10 @@ if ($active_tab === 'summary') {
 // Dynamic Greeting logic
 $hour = (int)current_time('G');
 $greeting = ($hour >= 5 && $hour < 12) ? 'صباح الخير' : 'مساء الخير';
+$sidebar_collapsed = get_user_meta($user->ID, 'shipping_sidebar_collapsed', true) === 'true';
 ?>
 
-<div class="shipping-admin-dashboard" dir="rtl" style="font-family: 'Rubik', sans-serif; background: <?php echo $appearance['bg_color']; ?>; border: 1px solid var(--shipping-border-color); border-radius: 12px; overflow: hidden; color: <?php echo $appearance['font_color']; ?>; font-size: <?php echo $appearance['font_size']; ?>; font-weight: <?php echo $appearance['font_weight']; ?>; line-height: <?php echo $appearance['line_spacing']; ?>;">
+<div class="shipping-admin-dashboard <?php echo $sidebar_collapsed ? 'sidebar-collapsed-pref' : ''; ?>" dir="rtl" style="font-family: 'Rubik', sans-serif; background: <?php echo $appearance['bg_color']; ?>; border: 1px solid var(--shipping-border-color); border-radius: 12px; overflow: hidden; color: <?php echo $appearance['font_color']; ?>; font-size: <?php echo $appearance['font_size']; ?>; font-weight: <?php echo $appearance['font_weight']; ?>; line-height: <?php echo $appearance['line_spacing']; ?>;">
     <!-- OFFICIAL SYSTEM HEADER -->
     <div class="shipping-main-header">
         <div style="display: flex; align-items: center; gap: 20px;">
@@ -75,6 +76,9 @@ $greeting = ($hour >= 5 && $hour < 12) ? 'صباح الخير' : 'مساء ال�
                         ?>
                     </div>
                 </div>
+                <?php if ($is_restricted): ?>
+                    <a href="<?php echo home_url('/home'); ?>" style="font-size: 10px; color: var(--shipping-primary-color); text-decoration: none; margin-top: 5px; font-weight: 700;">الرجوع للموقع الرسمي ←</a>
+                <?php endif; ?>
             </div>
         </div>
 
@@ -213,6 +217,11 @@ $greeting = ($hour >= 5 && $hour < 12) ? 'صباح الخير' : 'مساء ال�
         <!-- SIDEBAR -->
         <?php $is_restricted = $is_subscriber; ?>
         <div class="shipping-sidebar" style="background: <?php echo $appearance['sidebar_bg_color']; ?>;">
+            <div style="padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 10px;">
+                <div style="font-size: 11px; color: rgba(255,255,255,0.6); text-transform: uppercase; font-weight: 800; letter-spacing: 1px;">
+                    <?php echo $is_restricted ? 'حساب العميل الشخصي' : 'لوحة تحكم الإدارة'; ?>
+                </div>
+            </div>
             <ul style="list-style: none; padding: 0; margin: 0; flex: 1;">
 
                 <?php if (!$is_restricted): ?>
@@ -300,8 +309,23 @@ $greeting = ($hour >= 5 && $hour < 12) ? 'صباح الخير' : 'مساء ال�
                 <?php endif; ?>
 
                 <?php if ($is_restricted): ?>
-                    <li class="shipping-sidebar-item <?php echo in_array($active_tab, ['my-profile', 'customer-profile']) ? 'shipping-active' : ''; ?>" data-title="<?php echo esc_attr($labels['tab_my_profile']); ?>">
-                        <a href="<?php echo add_query_arg('shipping_tab', 'my-profile'); ?>" class="shipping-sidebar-link"><span class="dashicons dashicons-admin-users"></span> <span><?php echo $labels['tab_my_profile']; ?></span></a>
+                    <li class="shipping-sidebar-item <?php echo $active_tab == 'my-profile' ? 'shipping-active' : ''; ?>" data-title="لوحة التحكم">
+                        <a href="<?php echo add_query_arg('shipping_tab', 'my-profile'); ?>" class="shipping-sidebar-link"><span class="dashicons dashicons-dashboard"></span> <span>لوحة التحكم</span></a>
+                    </li>
+                    <li class="shipping-sidebar-item <?php echo $active_tab == 'shipment-mgmt' ? 'shipping-active' : ''; ?>" data-title="شحناتي">
+                        <a href="<?php echo add_query_arg('shipping_tab', 'shipment-mgmt'); ?>" class="shipping-sidebar-link"><span class="dashicons dashicons-products"></span> <span>شحناتي</span></a>
+                    </li>
+                    <li class="shipping-sidebar-item <?php echo $active_tab == 'order-mgmt' ? 'shipping-active' : ''; ?>" data-title="طلباتي">
+                        <a href="<?php echo add_query_arg('shipping_tab', 'order-mgmt'); ?>" class="shipping-sidebar-link"><span class="dashicons dashicons-clipboard"></span> <span>طلباتي</span></a>
+                    </li>
+                    <li class="shipping-sidebar-item <?php echo $active_tab == 'billing-payments' ? 'shipping-active' : ''; ?>" data-title="المدفوعات">
+                        <a href="<?php echo add_query_arg('shipping_tab', 'billing-payments'); ?>" class="shipping-sidebar-link"><span class="dashicons dashicons-money-alt"></span> <span>المدفوعات والفواتير</span></a>
+                    </li>
+                    <li class="shipping-sidebar-item <?php echo $active_tab == 'messaging' ? 'shipping-active' : ''; ?>" data-title="المراسلات">
+                        <a href="<?php echo add_query_arg('shipping_tab', 'messaging'); ?>" class="shipping-sidebar-link"><span class="dashicons dashicons-email"></span> <span>المراسلات والدعم</span></a>
+                    </li>
+                    <li class="shipping-sidebar-item <?php echo $active_tab == 'customer-profile' ? 'shipping-active' : ''; ?>" data-title="ملفي الشخصي">
+                        <a href="<?php echo add_query_arg('shipping_tab', 'customer-profile'); ?>" class="shipping-sidebar-link"><span class="dashicons dashicons-admin-users"></span> <span>الملف الشخصي</span></a>
                     </li>
                 <?php endif; ?>
 

@@ -497,6 +497,11 @@
 #ticket-thread-body::-webkit-scrollbar-thumb:hover { background: #a0aec0; }
 
 
+/* Intl-Tel-Input Fixes */
+.iti { width: 100%; display: block; }
+.iti__flag-container { z-index: 5; }
+.iti--allow-dropdown input { padding-right: 52px !important; }
+
 /* Authentication Interface Styling */
 .shipping-auth-wrapper {
     display: flex;

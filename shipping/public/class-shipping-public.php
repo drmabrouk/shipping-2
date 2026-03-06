@@ -45,10 +45,23 @@ class Shipping_Public {
                 wp_redirect(home_url('/shipping-login?login=failed'));
                 exit;
             }
+
+            $current_url = home_url($_SERVER['REQUEST_URI']);
+            if (current_user_can('subscriber')) {
+                if (strpos($current_url, home_url('/admin')) !== false) {
+                    wp_redirect(home_url('/account'));
+                    exit;
+                }
+            } else {
+                if (strpos($current_url, home_url('/account')) !== false) {
+                    wp_redirect(home_url('/admin'));
+                    exit;
+                }
+            }
         }
 
         if (is_admin() && !defined('DOING_AJAX') && !current_user_can('manage_options')) {
-            wp_redirect(home_url('/shipping-admin'));
+            wp_redirect(home_url('/admin'));
             exit;
         }
     }
@@ -62,7 +75,9 @@ class Shipping_Public {
         wp_enqueue_script('chart-js', 'https://cdn.jsdelivr.net/npm/chart.js', array(), '4.4.1', true);
         wp_enqueue_style('leaflet-css', 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css', array(), '1.9.4');
         wp_enqueue_script('leaflet-js', 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js', array(), '1.9.4', true);
-        wp_enqueue_style($this->plugin_name, SHIPPING_PLUGIN_URL . 'assets/css/shipping-public.css', array('dashicons'), $this->version, 'all');
+        wp_enqueue_style('intl-tel-input', 'https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/css/intlTelInput.css', array(), '17.0.8');
+        wp_enqueue_script('intl-tel-input', 'https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/intlTelInput.min.js', array(), '17.0.8', true);
+        wp_enqueue_style($this->plugin_name, SHIPPING_PLUGIN_URL . 'assets/css/shipping-public.css', array('dashicons', 'intl-tel-input'), $this->version, 'all');
 
         // Modular JS Controllers
         wp_enqueue_script('shipping-core', SHIPPING_PLUGIN_URL . 'assets/js/shipping-core.js', array('jquery'), $this->version, true);
@@ -124,11 +139,11 @@ class Shipping_Public {
     public function custom_login_redirect($redirect_to, $request, $user) {
         if (isset($user->roles) && is_array($user->roles)) {
             if (in_array('administrator', $user->roles) || current_user_can('shipping_manage_advanced')) {
-                return home_url('/shipping-admin?shipping_tab=summary');
+                return home_url('/admin?shipping_tab=summary');
             } elseif (current_user_can('shipping_manage_shipments')) {
-                return home_url('/shipping-admin?shipping_tab=shipment-mgmt');
+                return home_url('/admin?shipping_tab=shipment-mgmt');
             } else {
-                return home_url('/shipping-admin?shipping_tab=my-profile');
+                return home_url('/account?shipping_tab=my-profile');
             }
         }
         return $redirect_to;
@@ -430,25 +445,8 @@ class Shipping_Public {
                             </div>
                             <div class="auth-row">
                                 <div class="auth-input-group">
-                                    <label class="auth-label" for="reg_gender">الجنس</label>
-                                    <select id="reg_gender" class="auth-input">
-                                        <option value="male">ذكر</option>
-                                        <option value="female">أنثى</option>
-                                    </select>
-                                    <span class="dashicons dashicons-universal-access"></span>
-                                </div>
-                                <div class="auth-input-group">
-                                    <label class="auth-label" for="reg_yob">سنة الميلاد</label>
-                                    <input type="number" id="reg_yob" class="auth-input" placeholder="مثال: 1995" min="1900" max="<?php echo date('Y'); ?>" aria-required="true">
-                                    <span class="dashicons dashicons-calendar-alt"></span>
-                                    <div id="yob-validation-msg" class="validation-msg"></div>
-                                </div>
-                            </div>
-                            <div class="auth-row">
-                                <div class="auth-input-group">
                                     <label class="auth-label" for="reg_phone">رقم الجوال</label>
-                                    <input type="tel" id="reg_phone" class="auth-input" placeholder="05xxxxxxxx" aria-required="true">
-                                    <span class="dashicons dashicons-phone"></span>
+                                    <input type="tel" id="reg_phone" class="auth-input" style="padding-left: 50px;" aria-required="true">
                                     <div id="phone-validation-msg" class="validation-msg"></div>
                                 </div>
                             </div>
@@ -495,6 +493,10 @@ class Shipping_Public {
                         <!-- Registration Stage 3: OTP -->
                         <div class="reg-stage" id="reg-stage-3">
                             <p class="auth-subtitle" style="text-align: center; color: #64748b; margin-bottom: 20px; font-size: 0.9em;">لقد أرسلنا رمزاً مكوناً من 6 أرقام إلى بريدك الإلكتروني.</p>
+                            <div style="text-align: center; margin-bottom: 20px;">
+                                <span id="otp-expiry-timer" style="font-weight: 800; color: var(--shipping-primary-color); font-size: 1.2em;">15:00</span>
+                                <div style="font-size: 11px; color: #94a3b8;">ينتهي صلاحية الرمز خلال</div>
+                            </div>
                             <div class="auth-input-group">
                                 <input type="text" id="reg_otp" class="auth-input otp-input" placeholder="000000" maxlength="6">
                                 <span class="dashicons dashicons-shield"></span>
@@ -610,10 +612,23 @@ class Shipping_Public {
             }
         }
 
+        let iti;
         window.addEventListener('DOMContentLoaded', () => {
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.get('auth') === 'register') {
                 switchAuthTab('register');
+            }
+
+            const phoneInput = document.querySelector("#reg_phone");
+            if (phoneInput) {
+                iti = window.intlTelInput(phoneInput, {
+                    initialCountry: "sa",
+                    preferredCountries: ["sa", "ae", "kw", "bh", "qa", "om"],
+                    separateDialCode: true,
+                    nationalMode: false,
+                    autoPlaceholder: "aggressive",
+                    utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js",
+                });
             }
 
             // Real-time listeners
@@ -624,10 +639,11 @@ class Shipping_Public {
                 if (e.target.value.length > 0) showValMsg('last-name', '', '');
             });
             document.getElementById('reg_phone')?.addEventListener('input', (e) => {
-                const val = e.target.value;
-                if (!val) showValMsg('phone', '', '');
-                else if (!/^05\d{8}$/.test(val)) showValMsg('phone', 'يجب أن يبدأ بـ 05 ويتكون من 10 أرقام', 'error');
-                else showValMsg('phone', 'رقم جوال صحيح', 'success');
+                if (iti.isValidNumber()) {
+                    showValMsg('phone', 'رقم جوال صحيح', 'success');
+                } else {
+                    showValMsg('phone', 'صيغة رقم الجوال غير صحيحة', 'error');
+                }
             });
 
             document.getElementById('reg_email')?.addEventListener('input', () => debounceValidation('email'));
@@ -674,16 +690,12 @@ class Shipping_Public {
             if (stage === 1) {
                 regData.first_name = document.getElementById('reg_first_name').value;
                 regData.last_name = document.getElementById('reg_last_name').value;
-                regData.gender = document.getElementById('reg_gender').value;
-                regData.year_of_birth = document.getElementById('reg_yob').value;
-                regData.phone = document.getElementById('reg_phone').value;
+                regData.phone = iti.getNumber();
 
                 let valid = true;
                 if (!regData.first_name) { showValMsg('first-name', 'الاسم الأول مطلوب', 'error'); valid = false; }
                 if (!regData.last_name) { showValMsg('last-name', 'اسم العائلة مطلوب', 'error'); valid = false; }
-                if (!regData.year_of_birth) { showValMsg('yob', 'سنة الميلاد مطلوبة', 'error'); valid = false; }
-                if (!regData.phone) { showValMsg('phone', 'رقم الجوال مطلوب', 'error'); valid = false; }
-                else if (!/^05\d{8}$/.test(regData.phone)) { showValMsg('phone', 'صيغة رقم الجوال غير صحيحة (05xxxxxxxx)', 'error'); valid = false; }
+                if (!iti.isValidNumber()) { showValMsg('phone', 'صيغة رقم الجوال غير صحيحة', 'error'); valid = false; }
 
                 if (!valid) return;
             } else if (stage === 2) {
@@ -748,14 +760,35 @@ class Shipping_Public {
             }, 500);
         }
 
+        let otpTimer;
         function sendRegOTP() {
             const btn = document.getElementById('btn-reg-stage-2');
             btn.disabled = true; btn.innerText = 'جاري الإرسال...';
             const fd = new FormData(); fd.append('action', 'shipping_register_send_otp'); fd.append('email', regData.email);
             fetch(ajaxurl, {method:'POST', body:fd}).then(r=>r.json()).then(res=>{
                 btn.disabled = false; btn.innerText = 'إرسال رمز التحقق';
-                if (res.success) goToRegStage(3); else alert(res.data);
+                if (res.success) {
+                    goToRegStage(3);
+                    startOTPTimer(15 * 60);
+                } else alert(res.data);
             });
+        }
+
+        function startOTPTimer(duration) {
+            clearInterval(otpTimer);
+            let timer = duration, minutes, seconds;
+            const display = document.getElementById('otp-expiry-timer');
+            otpTimer = setInterval(function () {
+                minutes = parseInt(timer / 60, 10);
+                seconds = parseInt(timer % 60, 10);
+                minutes = minutes < 10 ? "0" + minutes : minutes;
+                seconds = seconds < 10 ? "0" + seconds : seconds;
+                if (display) display.textContent = minutes + ":" + seconds;
+                if (--timer < 0) {
+                    clearInterval(otpTimer);
+                    if (display) display.textContent = "00:00";
+                }
+            }, 1000);
         }
 
         function verifyRegOTP() {
@@ -833,12 +866,13 @@ class Shipping_Public {
 
         $user = wp_get_current_user();
         $roles = (array) $user->roles;
-        $active_tab = isset($_GET['shipping_tab']) ? sanitize_text_field($_GET['shipping_tab']) : 'summary';
+
+        $is_subscriber = in_array('subscriber', $roles);
+        $active_tab = isset($_GET['shipping_tab']) ? sanitize_text_field($_GET['shipping_tab']) : ($is_subscriber ? 'my-profile' : 'summary');
 
         $is_admin = in_array('administrator', $roles) || current_user_can('manage_options');
         $is_sys_admin = in_array('administrator', $roles);
         $is_administrator = in_array('administrator', $roles);
-        $is_subscriber = in_array('subscriber', $roles);
 
         // Fetch data
         $stats = Shipping_DB::get_statistics();
@@ -886,6 +920,7 @@ class Shipping_Public {
 
     public function ajax_search_customers() {
         if (!current_user_can('manage_options')) wp_send_json_error('Unauthorized');
+        check_ajax_referer('shipping_admin_action', 'nonce');
         $query = sanitize_text_field($_POST['query']);
         $customers = Shipping_DB::get_customers(array('search' => $query));
         wp_send_json_success($customers);
@@ -893,6 +928,7 @@ class Shipping_Public {
 
     public function ajax_refresh_dashboard() {
         if (!is_user_logged_in()) wp_send_json_error('Unauthorized');
+        check_ajax_referer('shipping_admin_action', 'nonce');
         wp_send_json_success(array('stats' => Shipping_DB::get_statistics()));
     }
 
@@ -1178,6 +1214,14 @@ class Shipping_Public {
         check_ajax_referer('shipping_admin_action', 'nonce');
         $id = intval($_POST['id']);
         Shipping_DB::acknowledge_alert($id, get_current_user_id());
+        wp_send_json_success();
+    }
+
+    public function ajax_save_sidebar_state() {
+        if (!is_user_logged_in()) wp_send_json_error('Unauthorized');
+        check_ajax_referer('shipping_admin_action', 'nonce');
+        $collapsed = !empty($_POST['collapsed']) ? 'true' : 'false';
+        update_user_meta(get_current_user_id(), 'shipping_sidebar_collapsed', $collapsed);
         wp_send_json_success();
     }
 
@@ -1728,6 +1772,16 @@ class Shipping_Public {
     }
 
 
+    public function ajax_get_otp_expiry() {
+        $email = sanitize_email($_POST['email'] ?? '');
+        $otp_time = get_transient('shipping_reg_otp_time_' . md5($email));
+        if ($otp_time) {
+            $remaining = (15 * 60) - (time() - $otp_time);
+            wp_send_json_success(['remaining' => max(0, $remaining)]);
+        }
+        wp_send_json_error();
+    }
+
     public function ajax_check_username_email() {
         $username = sanitize_user($_POST['username'] ?? '');
         $email = sanitize_email($_POST['email'] ?? '');
@@ -1753,14 +1807,35 @@ class Shipping_Public {
             wp_send_json_error('البريد الإلكتروني هذا مسجل بالفعل.');
         }
 
+        // Rate limiting check
+        if (get_transient('shipping_reg_otp_limit_' . md5($email))) {
+            wp_send_json_error('يرجى الانتظار قليلاً قبل طلب رمز جديد.');
+        }
+
         $otp = sprintf("%06d", mt_rand(1, 999999));
         set_transient('shipping_reg_otp_' . md5($email), $otp, 15 * MINUTE_IN_SECONDS);
+        set_transient('shipping_reg_otp_time_' . md5($email), time(), 15 * MINUTE_IN_SECONDS);
+        set_transient('shipping_reg_otp_limit_' . md5($email), true, 60); // 1 minute limit
 
         $shipping = Shipping_Settings::get_shipping_info();
         $subject = "رمز التحقق الخاص بك - " . $shipping['shipping_name'];
-        $message = "رمز التحقق الخاص بك لإتمام عملية التسجيل هو: " . $otp . "\nهذا الرمز صالح لمدة 15 دقيقة.";
 
-        wp_mail($email, $subject, $message);
+        $headers = array('Content-Type: text/html; charset=UTF-8');
+        $message = "
+            <div dir='rtl' style='font-family: Arial, sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 10px;'>
+                <h2 style='color: #F63049;'>{$shipping['shipping_name']}</h2>
+                <p>عزيزي المستخدم،</p>
+                <p>رمز التحقق الخاص بك لإتمام عملية التسجيل هو:</p>
+                <div style='background: #f8fafc; padding: 20px; text-align: center; font-size: 32px; font-weight: 900; letter-spacing: 10px; color: #111F35; border-radius: 8px; margin: 20px 0;'>
+                    {$otp}
+                </div>
+                <p style='color: #64748b; font-size: 14px;'>هذا الرمز صالح لمدة 15 دقيقة فقط.</p>
+                <hr style='border: none; border-top: 1px solid #eee; margin: 20px 0;'>
+                <p style='font-size: 12px; color: #94a3b8;'>إذا لم تقم بطلب هذا الرمز، يرجى تجاهل هذه الرسالة.</p>
+            </div>
+        ";
+
+        wp_mail($email, $subject, $message, $headers);
 
         wp_send_json_success('تم إرسال رمز التحقق إلى بريدك الإلكتروني.');
     }
@@ -1773,6 +1848,7 @@ class Shipping_Public {
 
         if ($saved_otp && $saved_otp === $otp) {
             delete_transient('shipping_reg_otp_' . md5($email));
+            delete_transient('shipping_reg_otp_time_' . md5($email));
             set_transient('shipping_reg_verified_' . md5($email), true, 30 * MINUTE_IN_SECONDS);
             wp_send_json_success('تم التحقق بنجاح.');
         } else {
@@ -1809,14 +1885,13 @@ class Shipping_Public {
 
         update_user_meta($user_id, 'first_name', sanitize_text_field($data['first_name']));
         update_user_meta($user_id, 'last_name', sanitize_text_field($data['last_name']));
+        update_user_meta($user_id, 'shipping_phone', sanitize_text_field($data['phone'] ?? ''));
         update_user_meta($user_id, 'shipping_account_status', 'active');
 
         $customer_data = [
             'username' => $username,
             'first_name' => sanitize_text_field($data['first_name']),
             'last_name' => sanitize_text_field($data['last_name']),
-            'gender' => sanitize_text_field($data['gender']),
-            'year_of_birth' => intval($data['year_of_birth']),
             'email' => $email,
             'phone' => sanitize_text_field($data['phone'] ?? ''),
             'wp_user_id' => $user_id,
@@ -1844,7 +1919,7 @@ class Shipping_Public {
         wp_set_current_user($user_id);
         wp_set_auth_cookie($user_id);
 
-        wp_send_json_success(['redirect_url' => home_url('/shipping-admin')]);
+        wp_send_json_success(['redirect_url' => home_url('/account')]);
     }
 
 
@@ -2151,11 +2226,22 @@ class Shipping_Public {
     }
 
     public function ajax_get_orders() {
-        if (!current_user_can('manage_options')) wp_send_json_error('Unauthorized');
+        if (!is_user_logged_in()) wp_send_json_error('Unauthorized');
+        check_ajax_referer('shipping_order_action', 'nonce');
+
+        $user = wp_get_current_user();
+        $is_restricted = in_array('subscriber', $user->roles);
+        $customer_id = intval($_GET['customer_id'] ?? 0);
+
+        if ($is_restricted) {
+            global $wpdb;
+            $customer_id = $wpdb->get_var($wpdb->prepare("SELECT id FROM {$wpdb->prefix}shipping_customers WHERE wp_user_id = %d", $user->ID));
+        }
+
         $args = [
             'id' => intval($_GET['id'] ?? 0),
             'status' => sanitize_text_field($_GET['status'] ?? ''),
-            'customer_id' => intval($_GET['customer_id'] ?? 0),
+            'customer_id' => $customer_id,
             'search' => sanitize_text_field($_GET['search'] ?? '')
         ];
         wp_send_json_success(Shipping_DB::get_orders($args));
