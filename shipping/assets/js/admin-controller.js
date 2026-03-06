@@ -239,6 +239,7 @@ window.AdminController = {
         const fd = new FormData();
         fd.append('action', 'shipping_acknowledge_alert');
         fd.append('id', id);
+        fd.append('nonce', shippingVars.nonce);
         fetch(ajaxurl, { method: 'POST', body: fd }).then(() => this.pollAlerts());
     },
 

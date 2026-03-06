@@ -257,6 +257,7 @@ class Shipping_DB {
             'gender' => sanitize_text_field($data['gender'] ?? 'male'),
             'year_of_birth' => intval($data['year_of_birth'] ?? 0),
             'email' => sanitize_email($data['email']),
+            'phone' => sanitize_text_field($data['phone'] ?? ''),
             'wp_user_id' => intval($data['wp_user_id']),
             'account_status' => sanitize_text_field($data['account_status'] ?? 'active'),
             'registration_date' => current_time('Y-m-d'),
