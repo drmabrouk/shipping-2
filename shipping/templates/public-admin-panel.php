@@ -317,7 +317,7 @@ $greeting = ($hour >= 5 && $hour < 12) ? 'صباح الخير' : 'مساء ال�
             </ul>
 
             <div class="shipping-sidebar-footer">
-                <button class="shipping-sidebar-toggle" id="shipping-sidebar-toggle" title="Toggle Sidebar">
+                <button type="button" class="shipping-sidebar-toggle" id="shipping-sidebar-toggle" aria-label="Toggle Sidebar">
                     <span class="dashicons dashicons-arrow-right-alt2"></span>
                     <span class="toggle-text">تصغير القائمة</span>
                 </button>

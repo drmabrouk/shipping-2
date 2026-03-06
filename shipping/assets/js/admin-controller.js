@@ -13,9 +13,13 @@ window.AdminController = {
 
     initSidebarState() {
         const isCollapsed = localStorage.getItem('shipping_sidebar_collapsed') === 'true';
-        if (isCollapsed) {
-            const sidebar = document.querySelector('.shipping-sidebar');
-            if (sidebar) sidebar.classList.add('collapsed');
+        const sidebar = document.querySelector('.shipping-sidebar');
+        if (sidebar) {
+            if (isCollapsed) {
+                sidebar.classList.add('collapsed');
+            } else {
+                sidebar.classList.remove('collapsed');
+            }
         }
     },
 
