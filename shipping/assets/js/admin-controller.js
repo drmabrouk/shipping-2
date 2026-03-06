@@ -15,10 +15,10 @@ window.AdminController = {
         const isCollapsed = localStorage.getItem('shipping_sidebar_collapsed') === 'true';
         const sidebar = document.querySelector('.shipping-sidebar');
         if (sidebar) {
-            if (isCollapsed) {
-                sidebar.classList.add('collapsed');
-            } else {
-                sidebar.classList.remove('collapsed');
+            sidebar.classList.toggle('collapsed', isCollapsed);
+            const toggleBtn = document.getElementById('shipping-sidebar-toggle');
+            if (toggleBtn) {
+                toggleBtn.setAttribute('aria-expanded', !isCollapsed);
             }
         }
     },
@@ -27,9 +27,13 @@ window.AdminController = {
         const sidebar = document.querySelector('.shipping-sidebar');
         if (!sidebar) return;
 
-        sidebar.classList.toggle('collapsed');
-        const isCollapsed = sidebar.classList.contains('collapsed');
+        const isCollapsed = sidebar.classList.toggle('collapsed');
         localStorage.setItem('shipping_sidebar_collapsed', isCollapsed);
+
+        const toggleBtn = document.getElementById('shipping-sidebar-toggle');
+        if (toggleBtn) {
+            toggleBtn.setAttribute('aria-expanded', !isCollapsed);
+        }
 
         // Trigger a resize event to help any layout components (like charts) adjust
         window.dispatchEvent(new Event('resize'));
