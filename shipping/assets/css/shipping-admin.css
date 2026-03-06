@@ -317,7 +317,7 @@
     border-left: 1px solid var(--shipping-border-color);
     padding: 20px 0 0 0;
     position: relative;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
     display: flex;
     flex-direction: column;
 }

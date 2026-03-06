@@ -231,6 +231,7 @@ $greeting = ($hour >= 5 && $hour < 12) ? 'صباح الخير' : 'مساء ال�
                         <li><a href="<?php echo add_query_arg(['shipping_tab' => 'shipment-mgmt', 'sub' => 'archiving']); ?>" class="<?php echo ($_GET['sub'] ?? '') == 'archiving' ? 'shipping-sub-active' : ''; ?>">أرشفة الشحنات</a></li>
                     </ul>
                 </li>
+                <?php endif; ?>
 
                 <?php if (current_user_can('shipping_manage_customers')): ?>
                 <li class="shipping-sidebar-item <?php echo $active_tab == 'customer-mgmt' ? 'shipping-active' : ''; ?>" data-title="<?php echo esc_attr($labels['tab_customer_mgmt']); ?>">
@@ -243,6 +244,7 @@ $greeting = ($hour >= 5 && $hour < 12) ? 'صباح الخير' : 'مساء ال�
                         <li><a href="<?php echo add_query_arg(['shipping_tab' => 'customer-mgmt', 'sub' => 'classification']); ?>" class="<?php echo ($_GET['sub'] ?? '') == 'classification' ? 'shipping-sub-active' : ''; ?>">تصنيف العملاء</a></li>
                     </ul>
                 </li>
+                <?php endif; ?>
 
                 <?php if (current_user_can('shipping_manage_orders')): ?>
                 <li class="shipping-sidebar-item <?php echo $active_tab == 'order-mgmt' ? 'shipping-active' : ''; ?>" data-title="<?php echo esc_attr($labels['tab_order_mgmt']); ?>">
@@ -254,6 +256,7 @@ $greeting = ($hour >= 5 && $hour < 12) ? 'صباح الخير' : 'مساء ال�
                         <li><a href="<?php echo add_query_arg(['shipping_tab' => 'order-mgmt', 'sub' => 'cancelled']); ?>" class="<?php echo ($_GET['sub'] ?? '') == 'cancelled' ? 'shipping-sub-active' : ''; ?>">طلبات ملغاة</a></li>
                     </ul>
                 </li>
+                <?php endif; ?>
 
                 <?php if (current_user_can('shipping_manage_logistics')): ?>
                 <li class="shipping-sidebar-item <?php echo $active_tab == 'tracking-logistics' ? 'shipping-active' : ''; ?>" data-title="<?php echo esc_attr($labels['tab_tracking_logistics']); ?>">
@@ -266,6 +269,7 @@ $greeting = ($hour >= 5 && $hour < 12) ? 'صباح الخير' : 'مساء ال�
                         <li><a href="<?php echo add_query_arg(['shipping_tab' => 'tracking-logistics', 'sub' => 'fleet']); ?>" class="<?php echo ($_GET['sub'] ?? '') == 'fleet' ? 'shipping-sub-active' : ''; ?>">إدارة الأسطول</a></li>
                     </ul>
                 </li>
+                <?php endif; ?>
 
                 <?php if (current_user_can('shipping_manage_customs')): ?>
                 <li class="shipping-sidebar-item <?php echo $active_tab == 'customs-clearance' ? 'shipping-active' : ''; ?>" data-title="<?php echo esc_attr($labels['tab_customs_clearance']); ?>">
@@ -277,6 +281,7 @@ $greeting = ($hour >= 5 && $hour < 12) ? 'صباح الخير' : 'مساء ال�
                         <li><a href="<?php echo add_query_arg(['shipping_tab' => 'customs-clearance', 'sub' => 'status']); ?>" class="<?php echo ($_GET['sub'] ?? '') == 'status' ? 'shipping-sub-active' : ''; ?>">حالة التخليص</a></li>
                     </ul>
                 </li>
+                <?php endif; ?>
 
                 <?php if (current_user_can('shipping_manage_billing')): ?>
                 <li class="shipping-sidebar-item <?php echo $active_tab == 'billing-payments' ? 'shipping-active' : ''; ?>" data-title="<?php echo esc_attr($labels['tab_billing_payments']); ?>">
@@ -291,7 +296,7 @@ $greeting = ($hour >= 5 && $hour < 12) ? 'صباح الخير' : 'مساء ال�
                         <li><a href="<?php echo add_query_arg(['shipping_tab' => 'billing-payments', 'sub' => 'reports']); ?>" class="<?php echo ($_GET['sub'] ?? '') == 'reports' ? 'shipping-sub-active' : ''; ?>">التقارير المالية</a></li>
                     </ul>
                 </li>
-
+                <?php endif; ?>
                 <?php endif; ?>
 
                 <?php if ($is_restricted): ?>
