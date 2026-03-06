@@ -19,12 +19,12 @@ window.shippingEditProfile = function() {
 global $wpdb;
 $user = wp_get_current_user();
 $roles = (array)$user->roles;
-$is_admin = in_array('administrator', $roles) || current_user_can('manage_options');
+$is_admin = current_user_can('shipping_manage_advanced') || current_user_can('manage_options');
 $is_sys_admin = in_array('administrator', $roles);
-$is_administrator = in_array('administrator', $roles);
+$is_administrator = $is_admin;
 $is_subscriber = in_array('subscriber', $roles);
 $is_customer = in_array('subscriber', $roles);
-$is_officer = $is_administrator;
+$is_officer = current_user_can('shipping_manage_shipments');
 
 $active_tab = isset($_GET['shipping_tab']) ? sanitize_text_field($_GET['shipping_tab']) : 'summary';
 $is_restricted = $is_subscriber;
@@ -84,6 +84,10 @@ $greeting = ($hour >= 5 && $hour < 12) ? 'صباح الخير' : 'مساء ال�
             </div>
 
             <div style="display: flex; gap: 15px; align-items: center; border-left: 1px solid var(--shipping-border-color); padding-left: 20px;">
+                <!-- Tracking Button -->
+                <?php if (current_user_can('shipping_manage_logistics')): ?>
+                    <a href="<?php echo add_query_arg(['shipping_tab' => 'tracking-logistics', 'sub' => 'live-tracking']); ?>" class="shipping-btn shipping-btn-outline" style="height: 36px; padding: 0 15px; font-size: 12px; border-radius: 8px; white-space: nowrap; text-decoration:none;"><span class="dashicons dashicons-location-alt" style="font-size:16px; margin-top:2px;"></span> تتبع الشحنات</a>
+                <?php endif; ?>
                 <!-- Messages Icon -->
                 <a href="<?php echo add_query_arg('shipping_tab', 'messaging'); ?>" class="shipping-header-circle-icon" title="المراسلات والشكاوى">
                     <span class="dashicons dashicons-email"></span>
@@ -143,7 +147,7 @@ $greeting = ($hour >= 5 && $hour < 12) ? 'صباح الخير' : 'مساء ال�
                 </div>
 
                 <!-- Add Shipment Button -->
-                <?php if ($is_admin || $is_sys_admin || $is_administrator): ?>
+                <?php if (current_user_can('shipping_manage_shipments')): ?>
                     <button onclick="shippingOpenAddShipmentModal()" class="shipping-btn" style="height: 36px; padding: 0 15px; font-size: 12px; background: var(--shipping-primary-color); box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius: 8px; white-space: nowrap;">+ إضافة شحنة</button>
                 <?php endif; ?>
             </div>
@@ -216,7 +220,7 @@ $greeting = ($hour >= 5 && $hour < 12) ? 'صباح الخير' : 'مساء ال�
                     <a href="<?php echo add_query_arg('shipping_tab', 'summary'); ?>" class="shipping-sidebar-link"><span class="dashicons dashicons-dashboard"></span> <span><?php echo $labels['tab_summary']; ?></span></a>
                 </li>
 
-
+                <?php if (current_user_can('shipping_manage_shipments')): ?>
                 <li class="shipping-sidebar-item <?php echo $active_tab == 'shipment-mgmt' ? 'shipping-active' : ''; ?>" data-title="<?php echo esc_attr($labels['tab_shipment_mgmt']); ?>">
                     <a href="<?php echo add_query_arg(['shipping_tab' => 'shipment-mgmt', 'sub' => 'create-shipment']); ?>" class="shipping-sidebar-link"><span class="dashicons dashicons-products"></span> <span><?php echo $labels['tab_shipment_mgmt']; ?></span></a>
                     <ul class="shipping-sidebar-dropdown" style="display: <?php echo $active_tab == 'shipment-mgmt' ? 'block' : 'none'; ?>;">
@@ -228,6 +232,7 @@ $greeting = ($hour >= 5 && $hour < 12) ? 'صباح الخير' : 'مساء ال�
                     </ul>
                 </li>
 
+                <?php if (current_user_can('shipping_manage_customers')): ?>
                 <li class="shipping-sidebar-item <?php echo $active_tab == 'customer-mgmt' ? 'shipping-active' : ''; ?>" data-title="<?php echo esc_attr($labels['tab_customer_mgmt']); ?>">
                     <a href="<?php echo add_query_arg(['shipping_tab' => 'customer-mgmt', 'sub' => 'profiles']); ?>" class="shipping-sidebar-link"><span class="dashicons dashicons-groups"></span> <span><?php echo $labels['tab_customer_mgmt']; ?></span></a>
                     <ul class="shipping-sidebar-dropdown" style="display: <?php echo $active_tab == 'customer-mgmt' ? 'block' : 'none'; ?>;">
@@ -239,6 +244,7 @@ $greeting = ($hour >= 5 && $hour < 12) ? 'صباح الخير' : 'مساء ال�
                     </ul>
                 </li>
 
+                <?php if (current_user_can('shipping_manage_orders')): ?>
                 <li class="shipping-sidebar-item <?php echo $active_tab == 'order-mgmt' ? 'shipping-active' : ''; ?>" data-title="<?php echo esc_attr($labels['tab_order_mgmt']); ?>">
                     <a href="<?php echo add_query_arg(['shipping_tab' => 'order-mgmt', 'sub' => 'new-orders']); ?>" class="shipping-sidebar-link"><span class="dashicons dashicons-clipboard"></span> <span><?php echo $labels['tab_order_mgmt']; ?></span></a>
                     <ul class="shipping-sidebar-dropdown" style="display: <?php echo $active_tab == 'order-mgmt' ? 'block' : 'none'; ?>;">
@@ -249,6 +255,7 @@ $greeting = ($hour >= 5 && $hour < 12) ? 'صباح الخير' : 'مساء ال�
                     </ul>
                 </li>
 
+                <?php if (current_user_can('shipping_manage_logistics')): ?>
                 <li class="shipping-sidebar-item <?php echo $active_tab == 'tracking-logistics' ? 'shipping-active' : ''; ?>" data-title="<?php echo esc_attr($labels['tab_tracking_logistics']); ?>">
                     <a href="<?php echo add_query_arg(['shipping_tab', 'tracking-logistics', 'sub' => 'live-tracking']); ?>" class="shipping-sidebar-link"><span class="dashicons dashicons-location-alt"></span> <span><?php echo $labels['tab_tracking_logistics']; ?></span></a>
                     <ul class="shipping-sidebar-dropdown" style="display: <?php echo $active_tab == 'tracking-logistics' ? 'block' : 'none'; ?>;">
@@ -260,6 +267,7 @@ $greeting = ($hour >= 5 && $hour < 12) ? 'صباح الخير' : 'مساء ال�
                     </ul>
                 </li>
 
+                <?php if (current_user_can('shipping_manage_customs')): ?>
                 <li class="shipping-sidebar-item <?php echo $active_tab == 'customs-clearance' ? 'shipping-active' : ''; ?>" data-title="<?php echo esc_attr($labels['tab_customs_clearance']); ?>">
                     <a href="<?php echo add_query_arg(['shipping_tab' => 'customs-clearance', 'sub' => 'documentation']); ?>" class="shipping-sidebar-link"><span class="dashicons dashicons-media-document"></span> <span><?php echo $labels['tab_customs_clearance']; ?></span></a>
                     <ul class="shipping-sidebar-dropdown" style="display: <?php echo $active_tab == 'customs-clearance' ? 'block' : 'none'; ?>;">
@@ -270,6 +278,7 @@ $greeting = ($hour >= 5 && $hour < 12) ? 'صباح الخير' : 'مساء ال�
                     </ul>
                 </li>
 
+                <?php if (current_user_can('shipping_manage_billing')): ?>
                 <li class="shipping-sidebar-item <?php echo $active_tab == 'billing-payments' ? 'shipping-active' : ''; ?>" data-title="<?php echo esc_attr($labels['tab_billing_payments']); ?>">
                     <a href="<?php echo add_query_arg(['shipping_tab' => 'billing-payments', 'sub' => 'invoice-gen']); ?>" class="shipping-sidebar-link"><span class="dashicons dashicons-money-alt"></span> <span><?php echo $labels['tab_billing_payments']; ?></span></a>
                     <ul class="shipping-sidebar-dropdown" style="display: <?php echo $active_tab == 'billing-payments' ? 'block' : 'none'; ?>;">
@@ -293,7 +302,7 @@ $greeting = ($hour >= 5 && $hour < 12) ? 'صباح الخير' : 'مساء ال�
 
 
 
-                <?php if ($is_admin || $is_sys_admin || $is_administrator): ?>
+                <?php if (current_user_can('shipping_manage_advanced')): ?>
                     <li class="shipping-sidebar-item <?php echo $active_tab == 'advanced-settings' ? 'shipping-active' : ''; ?>" data-title="الإعدادات المتقدمة">
                         <a href="<?php echo add_query_arg(['shipping_tab' => 'advanced-settings', 'sub' => 'init']); ?>" class="shipping-sidebar-link" style="color: #c53030 !important;"><span class="dashicons dashicons-shield-alt"></span> <span>الإعدادات المتقدمة</span></a>
                         <ul class="shipping-sidebar-dropdown" style="display: <?php echo $active_tab == 'advanced-settings' ? 'block' : 'none'; ?>;">
@@ -308,7 +317,7 @@ $greeting = ($hour >= 5 && $hour < 12) ? 'صباح الخير' : 'مساء ال�
             </ul>
 
             <div class="shipping-sidebar-footer">
-                <button class="shipping-sidebar-toggle" id="shipping-sidebar-toggle" title="Toggle Sidebar">
+                <button type="button" class="shipping-sidebar-toggle" id="shipping-sidebar-toggle" aria-label="Toggle Sidebar">
                     <span class="dashicons dashicons-arrow-right-alt2"></span>
                     <span class="toggle-text">تصغير القائمة</span>
                 </button>
@@ -373,7 +382,7 @@ $greeting = ($hour >= 5 && $hour < 12) ? 'صباح الخير' : 'مساء ال�
 
 
                 case 'advanced-settings':
-                    if ($is_admin || $is_sys_admin || $is_administrator) {
+                    if (current_user_can('shipping_manage_advanced')) {
                         $sub = $_GET['sub'] ?? 'init';
                         ?>
                         <div class="shipping-tabs-wrapper" style="display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #eee; overflow-x: auto; white-space: nowrap; padding-bottom: 10px; margin-top: 0;">

@@ -2,6 +2,7 @@
 <div class="shipping-admin-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
     <h2 style="margin: 0; font-weight: 800; color: var(--shipping-dark-color);">إدارة العملاء الموحدة</h2>
     <div style="display: flex; gap: 10px;">
+        <a href="<?php echo admin_url('admin-ajax.php?action=shipping_export_csv&type=customers&nonce=' . wp_create_nonce('shipping_export_nonce')); ?>" class="shipping-btn" style="width:auto; background: #2f855a; text-decoration:none;">تصدير CSV</a>
         <button class="shipping-btn" onclick="ShippingModal.open('add-customer-modal')">+ إضافة عميل جديد</button>
     </div>
 </div>

@@ -576,6 +576,20 @@ window.ShipmentsController = {
         });
     },
 
+    deleteShipment(id, num) {
+        if (!confirm('هل أنت متأكد من حذف الشحنة ' + num + ' نهائياً؟')) return;
+        const fd = new FormData();
+        fd.append('action', 'shipping_delete_shipment');
+        fd.append('id', id);
+        fd.append('nonce', shippingVars.shipmentNonce);
+        fetch(ajaxurl, { method: 'POST', body: fd }).then(r => r.json()).then(res => {
+            if (res.success) {
+                shippingShowNotification('تم حذف الشحنة بنجاح');
+                location.reload();
+            } else alert(res.data);
+        });
+    },
+
     processBulk() {
         const rowsRaw = document.getElementById('bulk-rows').value;
         if (!rowsRaw) return alert('يرجى إدخال البيانات');

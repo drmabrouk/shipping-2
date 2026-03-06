@@ -16,6 +16,7 @@ window.ShippingState = {
             this.selectedCustomer = parsed.selectedCustomer || null;
             this.selectedShipment = parsed.selectedShipment || null;
             this.selectedOrder = parsed.selectedOrder || null;
+            this.currentTab = parsed.currentTab || 'overview';
         }
         this.syncUI();
     },
@@ -24,7 +25,8 @@ window.ShippingState = {
         localStorage.setItem('shipping_system_state', JSON.stringify({
             selectedCustomer: this.selectedCustomer,
             selectedShipment: this.selectedShipment,
-            selectedOrder: this.selectedOrder
+            selectedOrder: this.selectedOrder,
+            currentTab: this.currentTab
         }));
     },
 
@@ -105,10 +107,17 @@ window.shippingOpenInternalTab = function(tabId, btn) {
     const target = document.getElementById(tabId);
     if (target) target.style.display = 'block';
 
+    // Update state
+    if (window.ShippingState) {
+        window.ShippingState.currentTab = tabId;
+        window.ShippingState.save();
+    }
+
     // Contextual UI updates for standardized search
     const billingSearch = document.getElementById('billing-search-block');
     if (billingSearch) {
         billingSearch.style.display = (tabId === 'billing-records' || tabId === 'billing-balances') ? 'block' : 'none';
+        if (billingSearch.style.display === 'block') BillingController.init(); // Re-init chart or data if needed
     }
 
     const logisticsSearch = document.getElementById('logistics-search-block');

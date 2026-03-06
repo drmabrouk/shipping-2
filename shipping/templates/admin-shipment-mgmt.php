@@ -6,13 +6,14 @@ $sub = $_GET['sub'] ?? 'create-shipment';
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
         <h3 style="margin:0;">إدارة الشحنات</h3>
         <div style="display: flex; gap: 10px;">
+            <a href="<?php echo admin_url('admin-ajax.php?action=shipping_export_csv&type=shipments&nonce=' . wp_create_nonce('shipping_export_nonce')); ?>" class="shipping-btn" style="width:auto; background: #2f855a; text-decoration:none;">تصدير CSV</a>
             <button onclick="ShippingModal.open('modal-bulk-shipments')" class="shipping-btn" style="width:auto; background: var(--shipping-secondary-color);">+ إدخال بالجملة</button>
             <button onclick="ShipmentsController.openCreationModal()" class="shipping-btn" style="width:auto;">+ إضافة شحنة جديدة</button>
         </div>
     </div>
 
     <!-- Professional Search & Filter Engine -->
-    <div style="background: white; padding: 25px; border: 1px solid var(--shipping-border-color); border-radius: 12px; margin-bottom: 25px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+    <div class="shipping-search-engine-block">
         <form id="shipment-search-form" style="display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 15px; align-items: end;">
             <div class="shipping-form-group" style="margin-bottom:0;">
                 <label style="font-size: 12px; font-weight: 700; color: #64748b;">بحث متقدم (رقم الشحنة، العميل، الموقع):</label>
@@ -90,10 +91,10 @@ $sub = $_GET['sub'] ?? 'create-shipment';
                             <td>
                                 <div style="display:flex; gap:6px; justify-content: flex-end;">
                                     <button class="shipping-btn-outline" style="padding:6px 10px; font-size:11px;" onclick="ShipmentsController.quickTrack('<?php echo $s->shipment_number; ?>', <?php echo $s->id; ?>, this)">تتبع</button>
-                                    <button class="shipping-btn-outline" style="padding:6px 10px; font-size:11px; color: #319795; border-color: #319795;" onclick="ShipmentsController.viewFullDossier(<?php echo $s->id; ?>)">التفاصيل</button>
-                                    <button class="shipping-btn-outline" style="padding:6px 10px; font-size:11px; color: #2d3748; border-color: #2d3748;" onclick="ShipmentsController.printSticker(<?php echo $s->id; ?>)">Sticker</button>
+                                    <button class="shipping-btn-outline" style="padding:6px 10px; font-size:11px; color: #2d3748; border-color: #2d3748;" onclick="ShipmentsController.printSticker(<?php echo $s->id; ?>)">ملصق الشحنة</button>
                                     <button class="shipping-btn-outline" style="padding:6px 10px; font-size:11px; color: #805ad5; border-color: #805ad5;" onclick="ShipmentsController.printInvoice(<?php echo $s->id; ?>)">الفاتورة</button>
                                     <button class="shipping-btn" style="padding:6px 10px; font-size:11px; background: #4a5568;" onclick="ShipmentsController.openEditModal(<?php echo htmlspecialchars(json_encode($s)); ?>)">تعديل</button>
+                                    <button class="shipping-btn" style="padding:6px 10px; font-size:11px; background: #e53e3e;" onclick="ShipmentsController.deleteShipment(<?php echo $s->id; ?>, '<?php echo $s->shipment_number; ?>')">حذف</button>
                                 </div>
                             </td>
                         </tr>

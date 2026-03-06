@@ -3,6 +3,9 @@
 class Shipping_Settings {
 
     public static function get_appearance() {
+        $cached = get_transient('shipping_appearance_cache');
+        if ($cached !== false) return $cached;
+
         $default = array(
             'primary_color' => '#F63049',
             'secondary_color' => '#D02752',
@@ -20,10 +23,15 @@ class Shipping_Settings {
             'table_style' => 'modern',
             'button_style' => 'flat'
         );
-        return wp_parse_args(get_option('shipping_appearance', array()), $default);
+        $res = wp_parse_args(get_option('shipping_appearance', array()), $default);
+        set_transient('shipping_appearance_cache', $res, DAY_IN_SECONDS);
+        return $res;
     }
 
     public static function get_labels() {
+        $cached = get_transient('shipping_labels_cache');
+        if ($cached !== false) return $cached;
+
         $default = array(
             'tab_summary' => 'نظرة عامة',
             'tab_users_management' => 'إدارة مستخدمي النظام (كافة الأدوار)',
@@ -37,15 +45,19 @@ class Shipping_Settings {
             'tab_customs_clearance' => 'التخليص الجمركي',
             'tab_billing_payments' => 'الفواتير والمدفوعات'
         );
-        return wp_parse_args(get_option('shipping_labels', array()), $default);
+        $res = wp_parse_args(get_option('shipping_labels', array()), $default);
+        set_transient('shipping_labels_cache', $res, DAY_IN_SECONDS);
+        return $res;
     }
 
     public static function save_labels($labels) {
         update_option('shipping_labels', $labels);
+        delete_transient('shipping_labels_cache');
     }
 
     public static function save_appearance($data) {
         update_option('shipping_appearance', $data);
+        delete_transient('shipping_appearance_cache');
     }
 
     public static function get_notifications() {
@@ -63,6 +75,9 @@ class Shipping_Settings {
     }
 
     public static function get_shipping_info() {
+        $cached = get_transient('shipping_info_cache');
+        if ($cached !== false) return $cached;
+
         $default = array(
             'shipping_name' => 'Shipping',
             'shipping_officer_name' => 'Admin',
@@ -75,11 +90,14 @@ class Shipping_Settings {
             'extra_details' => '',
             'currency' => 'SAR'
         );
-        return get_option('shipping_info', $default);
+        $res = get_option('shipping_info', $default);
+        set_transient('shipping_info_cache', $res, DAY_IN_SECONDS);
+        return $res;
     }
 
     public static function save_shipping_info($data) {
         update_option('shipping_info', $data);
+        delete_transient('shipping_info_cache');
     }
 
     public static function get_retention_settings() {

@@ -1100,6 +1100,59 @@ class Shipping_Public {
         wp_send_json_success();
     }
 
+    public function ajax_get_alerts() {
+        if (!is_user_logged_in()) wp_send_json_error('Unauthorized');
+        $alerts = Shipping_DB::get_active_alerts_for_user(get_current_user_id());
+        wp_send_json_success($alerts);
+    }
+
+    public function ajax_acknowledge_alert() {
+        if (!is_user_logged_in()) wp_send_json_error('Unauthorized');
+        $id = intval($_POST['id']);
+        Shipping_DB::acknowledge_alert($id, get_current_user_id());
+        wp_send_json_success();
+    }
+
+    public function ajax_export_csv() {
+        if (!current_user_can('manage_options')) wp_die('Unauthorized');
+        check_ajax_referer('shipping_export_nonce', 'nonce');
+
+        $type = $_GET['type'] ?? '';
+        $filename = 'export_' . $type . '_' . date('Y-m-d') . '.csv';
+
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename=' . $filename);
+
+        $output = fopen('php://output', 'w');
+        // Add BOM for Excel compatibility with UTF-8
+        fputs($output, $bom = (chr(0xEF) . chr(0xBB) . chr(0xBF)));
+
+        global $wpdb;
+
+        switch ($type) {
+            case 'shipments':
+                fputcsv($output, ['رقم الشحنة', 'العميل', 'المنشأ', 'الوجهة', 'الوزن', 'الحالة', 'التاريخ']);
+                $data = $wpdb->get_results("SELECT s.shipment_number, CONCAT(c.first_name, ' ', c.last_name) as customer, s.origin, s.destination, s.weight, s.status, s.created_at FROM {$wpdb->prefix}shipping_shipments s LEFT JOIN {$wpdb->prefix}shipping_customers c ON s.customer_id = c.id");
+                foreach ($data as $row) fputcsv($output, (array)$row);
+                break;
+
+            case 'customers':
+                fputcsv($output, ['اسم المستخدم', 'الاسم الأول', 'اسم العائلة', 'البريد', 'الهاتف', 'الحالة', 'التصنيف']);
+                $data = $wpdb->get_results("SELECT username, first_name, last_name, email, phone, account_status, classification FROM {$wpdb->prefix}shipping_customers");
+                foreach ($data as $row) fputcsv($output, (array)$row);
+                break;
+
+            case 'invoices':
+                fputcsv($output, ['رقم الفاتورة', 'العميل', 'الإجمالي', 'الحالة', 'تاريخ الاستحقاق']);
+                $data = $wpdb->get_results("SELECT i.invoice_number, CONCAT(c.first_name, ' ', c.last_name) as customer, i.total_amount, i.status, i.due_date FROM {$wpdb->prefix}shipping_invoices i LEFT JOIN {$wpdb->prefix}shipping_customers c ON i.customer_id = c.id");
+                foreach ($data as $row) fputcsv($output, (array)$row);
+                break;
+        }
+
+        fclose($output);
+        exit;
+    }
+
     public function ajax_get_user_role() {
         if (!current_user_can('manage_options') && !current_user_can('manage_options')) wp_send_json_error('Unauthorized');
         $user_id = intval($_GET['user_id']);
@@ -1937,6 +1990,17 @@ class Shipping_Public {
 
         if (Shipping_DB::update_shipment($id, $data)) wp_send_json_success();
         else wp_send_json_error('Failed to update shipment');
+    }
+
+    public function ajax_delete_shipment() {
+        if (!current_user_can('manage_options')) wp_send_json_error('Unauthorized');
+        check_ajax_referer('shipping_shipment_action', 'nonce');
+        $id = intval($_POST['id']);
+        global $wpdb;
+        $wpdb->delete("{$wpdb->prefix}shipping_shipment_tracking_events", ['shipment_id' => $id]);
+        $wpdb->delete("{$wpdb->prefix}shipping_shipment_logs", ['shipment_id' => $id]);
+        $wpdb->delete("{$wpdb->prefix}shipping_shipments", ['id' => $id]);
+        wp_send_json_success();
     }
 
     public function ajax_get_shipment_tracking() {

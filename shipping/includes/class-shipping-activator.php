@@ -520,6 +520,15 @@ class Shipping_Activator {
         self::setup_roles();
         self::seed_notification_templates();
         self::seed_sample_data();
+        self::add_db_indexes();
+    }
+
+    private static function add_db_indexes() {
+        global $wpdb;
+        $wpdb->query("ALTER TABLE {$wpdb->prefix}shipping_shipments ADD INDEX idx_ship_num (shipment_number)");
+        $wpdb->query("ALTER TABLE {$wpdb->prefix}shipping_customers ADD INDEX idx_cust_user (username)");
+        $wpdb->query("ALTER TABLE {$wpdb->prefix}shipping_orders ADD INDEX idx_ord_num (order_number)");
+        $wpdb->query("ALTER TABLE {$wpdb->prefix}shipping_invoices ADD INDEX idx_inv_num (invoice_number)");
     }
 
     private static function seed_sample_data() {
@@ -794,6 +803,36 @@ class Shipping_Activator {
     }
 
     private static function setup_roles() {
+        // Grandular Capabilities
+        $caps = [
+            'shipping_manage_shipments',
+            'shipping_manage_customers',
+            'shipping_manage_orders',
+            'shipping_manage_logistics',
+            'shipping_manage_customs',
+            'shipping_manage_billing',
+            'shipping_manage_advanced',
+            'shipping_view_reports'
+        ];
+
+        $admin_role = get_role('administrator');
+        if ($admin_role) {
+            foreach ($caps as $cap) {
+                $admin_role->add_cap($cap);
+            }
+        }
+
+        // Create specialized Staff role if it doesn't exist
+        if (!get_role('shipping_staff')) {
+            add_role('shipping_staff', 'موظف عمليات الشحن', [
+                'read' => true,
+                'shipping_manage_shipments' => true,
+                'shipping_manage_orders' => true,
+                'shipping_manage_logistics' => true,
+                'shipping_manage_customs' => true
+            ]);
+        }
+
         // Remove custom roles if they exist
         remove_role('shipping_system_admin');
         remove_role('shipping_admin');
